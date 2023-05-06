@@ -9,9 +9,13 @@ type FileStats struct {
 	FnCov FuncCov
 }
 
+type Coverage struct {
+	Function  FunctionStats
+	Statement StatementStats
+}
+
 type Stats struct {
-	Total   float64
-	fileCov map[string]*FileStats
+	Coverage
 }
 
 type Options struct {
@@ -26,10 +30,6 @@ func TrimModule(name string) ParseOpts {
 	}
 }
 
-type parser struct {
-	opts Options
-}
-
 func Parse(covProfile io.Reader, fnCov io.Reader, opts ...ParseOpts) (*Stats, error) {
 	c, err := ParseCovProfile(covProfile, opts...)
 	if err != nil {
@@ -41,20 +41,5 @@ func Parse(covProfile io.Reader, fnCov io.Reader, opts ...ParseOpts) (*Stats, er
 		return nil, err
 	}
 
-	stats := map[string]*FileStats{}
-	for name, fCov := range c.fileCov {
-		stats[name] = &FileStats{Cov: fCov}
-	}
-
-	for name, fCov := range f.file {
-		s, ok := stats[name]
-		if ok {
-			s.FnCov = fCov
-			continue
-		}
-
-		stats[name] = &FileStats{FnCov: fCov}
-	}
-
-	return &Stats{Total: c.Total, fileCov: stats}, nil
+	return &Stats{Coverage: Coverage{Function: f, Statement: c}}, nil
 }
