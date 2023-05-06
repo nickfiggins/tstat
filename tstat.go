@@ -6,27 +6,43 @@ import (
 
 type FileStats struct {
 	Cov   FileCov
-	FnCov FuncFileCov
+	FnCov FuncCov
 }
 
 type Stats struct {
-	Total    float64
-	coverage map[string]*FileStats
+	Total   float64
+	fileCov map[string]*FileStats
 }
 
-func Read(cov io.Reader, fn io.Reader) (*Stats, error) {
-	c, err := ReadCover(cov)
+type Options struct {
+	trimModule string
+}
+
+type ParseOpts func(*Options)
+
+func TrimModule(name string) ParseOpts {
+	return func(o *Options) {
+		o.trimModule = name
+	}
+}
+
+type parser struct {
+	opts Options
+}
+
+func Parse(covProfile io.Reader, fnCov io.Reader, opts ...ParseOpts) (*Stats, error) {
+	c, err := ParseCovProfile(covProfile, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := ReadFunc(fn)
+	f, err := ParseFuncCoverage(fnCov, opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	stats := map[string]*FileStats{}
-	for name, fCov := range c.coverage {
+	for name, fCov := range c.fileCov {
 		stats[name] = &FileStats{Cov: fCov}
 	}
 
@@ -37,8 +53,8 @@ func Read(cov io.Reader, fn io.Reader) (*Stats, error) {
 			continue
 		}
 
-		stats[name] = &FileStats{FnCov: s.FnCov}
+		stats[name] = &FileStats{FnCov: fCov}
 	}
 
-	return &Stats{Total: c.Total, coverage: stats}, nil
+	return &Stats{Total: c.Total, fileCov: stats}, nil
 }
