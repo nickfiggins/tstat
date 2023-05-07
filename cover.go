@@ -27,12 +27,9 @@ type FileCov struct {
 	CoveredStmts int
 }
 
-func (c *StatementStats) File(f string) FileCov {
+func (c *StatementStats) File(f string) (FileCov, bool) {
 	v, ok := c.fileCov[f]
-	if ok {
-		return v
-	}
-	return v
+	return v, ok
 }
 
 func ParseCoverProfile(fileName string, opts ...ParseOpts) (*StatementStats, error) {
@@ -61,17 +58,25 @@ func ParseCoverProfileFromReader(r io.Reader, opts ...ParseOpts) (*StatementStat
 
 func parseProfiles(profiles []*cover.Profile, options Options) *StatementStats {
 	cov := map[string]FileCov{}
-	totalStmts := 0
-	totalCovered := 0
+	total := 0
+	covered := 0
 	for _, prof := range profiles {
 		fileCov := parseProfile(prof)
 		file := options.fileName(prof.FileName)
 		cov[file] = fileCov
-		totalStmts += fileCov.Stmts
-		totalCovered += fileCov.CoveredStmts
+		total += fileCov.Stmts
+		covered += fileCov.CoveredStmts
+		fileCov.Percent = percent(fileCov.CoveredStmts, fileCov.Stmts)
 	}
 
-	return &StatementStats{fileCov: cov, Percent: 100 * float64(totalCovered) / float64(totalStmts)}
+	return &StatementStats{fileCov: cov, Percent: percent(covered, total)}
+}
+
+func percent(covered, total int) float64 {
+	if total == 0 {
+		return -1
+	}
+	return 100 * float64(covered) / float64(total)
 }
 
 func parseProfile(cp *cover.Profile) FileCov {
