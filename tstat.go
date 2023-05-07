@@ -4,42 +4,45 @@ import (
 	"io"
 )
 
-type FileStats struct {
-	Cov   FileCov
-	FnCov FuncCov
-}
-
 type Coverage struct {
 	Function  FunctionStats
-	Statement StatementStats
+	Statement CoverStats
 }
 
-type Stats struct {
-	Coverage
+type CoverageParser struct {
+	profile     io.Reader
+	funcProfile io.Reader
+	opts        []ParseOpts
 }
 
-type Options struct {
-	trimModule string
+func NewCoverageParser(profile, funcProfile io.Reader, opts ...ParseOpts) *CoverageParser {
+	return &CoverageParser{profile: profile, funcProfile: funcProfile, opts: opts}
 }
 
-type ParseOpts func(*Options)
-
-func TrimModule(name string) ParseOpts {
-	return func(o *Options) {
-		o.trimModule = name
-	}
-}
-
-func Parse(covProfile io.Reader, fnCov io.Reader, opts ...ParseOpts) (*Stats, error) {
-	c, err := ParseCovProfile(covProfile, opts...)
+func (cp *CoverageParser) Parse(opts ...ParseOpts) (*Coverage, error) {
+	opts = append(opts, cp.opts...)
+	c, err := ParseCoverProfileFromReader(cp.profile, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := ParseFuncCoverage(fnCov, opts...)
+	f, err := ParseFuncProfileFromReader(cp.funcProfile, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Stats{Coverage: Coverage{Function: f, Statement: c}}, nil
+	return &Coverage{Function: f, Statement: c}, nil
+}
+
+type TestParser struct {
+	out  io.Reader
+	opts []ParseOpts
+}
+
+func NewTestParser(jsonOut io.Reader, opts ...ParseOpts) *TestParser {
+	return &TestParser{out: jsonOut, opts: opts}
+}
+
+func (tp *TestParser) Parse(_ ...ParseOpts) (*TestStats, error) {
+	return ParseTestOutput(tp.out)
 }

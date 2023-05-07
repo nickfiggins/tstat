@@ -13,9 +13,9 @@ import (
 type FuncCov map[string]float64
 
 type FunctionStats struct {
-	Total float64
-	file  map[string]FuncCov
-	fn    FuncCov
+	Percent float64
+	file    map[string]FuncCov
+	fn      FuncCov
 }
 
 func (c *FunctionStats) Func(fn string) float64 {
@@ -34,24 +34,17 @@ func (c *FunctionStats) File(f string) FuncCov {
 	return v
 }
 
-func ParseFuncCoverageFile(path string) (FunctionStats, error) {
-	f, err := os.Open(path)
+const numFields = 3
+
+func ParseFuncProfile(fileName string) (FunctionStats, error) {
+	f, err := os.Open(fileName)
 	if err != nil {
 		return FunctionStats{}, err
 	}
-	return ParseFuncCoverage(f)
+	return ParseFuncProfileFromReader(f)
 }
 
-const numFields = 3
-
-func (o Options) fileName(full string) string {
-	if o.trimModule == "" {
-		return strings.TrimPrefix(full, o.trimModule)
-	}
-	return full
-}
-
-func ParseFuncCoverage(r io.Reader, opts ...ParseOpts) (FunctionStats, error) {
+func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (FunctionStats, error) {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
@@ -72,7 +65,7 @@ func ParseFuncCoverage(r io.Reader, opts ...ParseOpts) (FunctionStats, error) {
 		}
 
 		if entry[1] == "(statements)" {
-			cov.Total = percent
+			cov.Percent = percent
 			continue
 		}
 

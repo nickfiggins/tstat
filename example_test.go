@@ -8,6 +8,6 @@ import (
 )
 
 func TestXxx(t *testing.T) {
-	cov, _ := tstat.ParseFuncCoverageFile("./testdata/func.out")
+	cov, _ := tstat.ParseFuncProfile("./testdata/func.out")
 	fmt.Println("data", cov.File("db.go"))
 }

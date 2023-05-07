@@ -7,18 +7,18 @@ import (
 	"golang.org/x/tools/cover"
 )
 
-type StatementStats struct {
-	Total   float64
+type CoverStats struct {
+	Percent float64
 	fileCov map[string]FileCov
 }
 
 type FileCov struct {
-	Total       float64 // percent
-	TotalStmt   int     // num statments
-	StmtCovered int
+	Percent      float64 // percent
+	Stmts        int     // num statments
+	CoveredStmts int
 }
 
-func (c *StatementStats) File(f string) FileCov {
+func (c *CoverStats) File(f string) FileCov {
 	v, ok := c.fileCov[f]
 	if ok {
 		return v
@@ -26,31 +26,31 @@ func (c *StatementStats) File(f string) FileCov {
 	return v
 }
 
-func ParseCovProfileFromFile(p string, opts ...ParseOpts) (StatementStats, error) {
+func ParseCoverProfile(fileName string, opts ...ParseOpts) (CoverStats, error) {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
 	}
-	profiles, err := cover.ParseProfiles(p)
+	profiles, err := cover.ParseProfiles(fileName)
 	if err != nil {
-		return StatementStats{}, fmt.Errorf("couldn't parse coverage from file: %w", err)
+		return CoverStats{}, fmt.Errorf("couldn't parse coverage from file: %w", err)
 	}
 	return parseProfiles(profiles, options), nil
 }
 
-func ParseCovProfile(r io.Reader, opts ...ParseOpts) (StatementStats, error) {
+func ParseCoverProfileFromReader(r io.Reader, opts ...ParseOpts) (CoverStats, error) {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
 	}
 	profiles, err := cover.ParseProfilesFromReader(r)
 	if err != nil {
-		return StatementStats{}, fmt.Errorf("couldn't parse coverage from reader: %w", err)
+		return CoverStats{}, fmt.Errorf("couldn't parse coverage from reader: %w", err)
 	}
 	return parseProfiles(profiles, options), nil
 }
 
-func parseProfiles(profiles []*cover.Profile, options Options) StatementStats {
+func parseProfiles(profiles []*cover.Profile, options Options) CoverStats {
 	cov := map[string]FileCov{}
 	totalStmts := 0
 	totalCovered := 0
@@ -58,11 +58,11 @@ func parseProfiles(profiles []*cover.Profile, options Options) StatementStats {
 		fileCov := parseProfile(prof)
 		file := options.fileName(prof.FileName)
 		cov[file] = fileCov
-		totalStmts += fileCov.TotalStmt
-		totalCovered += fileCov.StmtCovered
+		totalStmts += fileCov.Stmts
+		totalCovered += fileCov.CoveredStmts
 	}
 
-	return StatementStats{fileCov: cov, Total: float64(totalCovered) / float64(totalStmts)}
+	return CoverStats{fileCov: cov, Percent: float64(totalCovered) / float64(totalStmts)}
 }
 
 func parseProfile(cp *cover.Profile) FileCov {
@@ -76,8 +76,8 @@ func parseProfile(cp *cover.Profile) FileCov {
 	}
 
 	return FileCov{
-		Total:       float64(coveredStmts) / float64(stmts),
-		TotalStmt:   stmts,
-		StmtCovered: coveredStmts,
+		Percent:      float64(coveredStmts) / float64(stmts),
+		Stmts:        stmts,
+		CoveredStmts: coveredStmts,
 	}
 }
