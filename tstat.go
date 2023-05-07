@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type Parser struct {
@@ -67,17 +69,34 @@ func (p *Parser) CoverageStats(profile string) (*Coverage, error) {
 
 func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts ...ParseOpts) (*Coverage, error) {
 	opts = append(opts, p.opts...)
-	c, err := ParseCoverProfileFromReader(profile, opts...)
+
+	var stmtStats *StatementStats
+	var fnStats *FunctionStats
+	eg := errgroup.Group{}
+	eg.Go(func() error {
+		stmt, err := ParseCoverProfileFromReader(profile, opts...)
+		if err != nil {
+			return fmt.Errorf("couldn't parse cover profile: %w", err)
+		}
+		stmtStats = stmt
+		return nil
+	})
+
+	eg.Go(func() error {
+		fn, err := ParseFuncProfileFromReader(funcProfile, opts...)
+		if err != nil {
+			return fmt.Errorf("couldn't parse function profile: %w", err)
+		}
+		fnStats = fn
+		return nil
+	})
+
+	err := eg.Wait()
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := ParseFuncProfileFromReader(funcProfile, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Coverage{Function: f, Statement: c}, nil
+	return &Coverage{Function: fnStats, Statement: stmtStats}, nil
 }
 
 func (p *Parser) TestStatsFromReader(jsonOutput io.Reader) (*TestStats, error) {

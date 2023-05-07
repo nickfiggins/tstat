@@ -1,31 +1,25 @@
 package tstat_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/nickfiggins/tstat"
 )
 
-func TestRead(t *testing.T) {
+func Test_CoverageStats(t *testing.T) {
 	testDir := "testdata/"
 	tests := []struct {
-		name    string
-		covFile string
-		want    *tstat.Coverage
-		wantErr bool
+		name        string
+		covFile     string
+		wantPercent float64
+		wantErr     bool
 	}{
 		{
-			name:    "happy",
-			covFile: "prog/cover.out",
-			want: &tstat.Coverage{
-				Function: &tstat.FunctionStats{
-					Percent: 25,
-				},
-				Statement: &tstat.StatementStats{
-					Percent: 25,
-				},
-			},
+			name:        "happy",
+			covFile:     "prog/cover.out",
+			wantPercent: 25,
 		},
 	}
 	for _, tt := range tests {
@@ -36,13 +30,54 @@ func TestRead(t *testing.T) {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.Statement.Percent != tt.want.Statement.Percent {
-				t.Errorf("Read() = got statement pct %v, wanted %v", got.Statement.Percent, tt.want.Statement.Percent)
+			if got.Statement.CoverPct != tt.wantPercent {
+				t.Errorf("Read() = got statement pct %v, wanted %v", got.Statement.CoverPct, tt.wantPercent)
 			}
 
-			if got.Function.Percent != tt.want.Function.Percent {
-				t.Errorf("Read() = got function pct %v, wanted %v", got.Function.Percent, tt.want.Function.Percent)
+			if got.Function.CoverPct != tt.wantPercent {
+				t.Errorf("Read() = got function pct %v, wanted %v", got.Function.CoverPct, tt.wantPercent)
 			}
 		})
 	}
+}
+
+func Test_CoverageStatsFromReaders(t *testing.T) {
+	testDir := "testdata/"
+	tests := []struct {
+		name        string
+		covFile     string
+		funcFile    string
+		wantPercent float64
+		wantErr     bool
+	}{
+		{
+			name:        "happy",
+			covFile:     "prog/cover.out",
+			funcFile:    "prog/func.out",
+			wantPercent: 25,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cp := tstat.NewParser()
+			f1, _ := os.Open(filepath.Join(testDir, tt.covFile))
+			f2, _ := os.Open(filepath.Join(testDir, tt.funcFile))
+			got, err := cp.CoverageStatsFromReaders(f1, f2)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got.Statement.CoverPct != tt.wantPercent {
+				t.Errorf("Read() = got statement pct %v, wanted %v", got.Statement.CoverPct, tt.wantPercent)
+			}
+
+			if got.Function.CoverPct != tt.wantPercent {
+				t.Errorf("Read() = got function pct %v, wanted %v", got.Function.CoverPct, tt.wantPercent)
+			}
+		})
+	}
+}
+
+func Test_TestStats(t *testing.T) {
+
 }

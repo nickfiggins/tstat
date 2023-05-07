@@ -17,22 +17,19 @@ type Coverage struct {
 }
 
 type StatementStats struct {
-	Percent float64
-	fileCov map[string]FileCov
+	CoverPct float64
+	fileCov  map[string]File
 }
 
-type FileCov struct {
-	Percent      float64 // percent
+type File struct {
+	CoverPct     float64 // percent
 	Stmts        int     // num statments
 	CoveredStmts int
 }
 
-func (c *StatementStats) File(f string) FileCov {
-	v, ok := c.fileCov[f]
-	if ok {
-		return v
-	}
-	return v
+func (st *StatementStats) File(f string) (File, bool) {
+	v, ok := st.fileCov[f]
+	return v, ok
 }
 
 func ParseCoverProfile(fileName string, opts ...ParseOpts) (*StatementStats, error) {
@@ -60,21 +57,29 @@ func ParseCoverProfileFromReader(r io.Reader, opts ...ParseOpts) (*StatementStat
 }
 
 func parseProfiles(profiles []*cover.Profile, options Options) *StatementStats {
-	cov := map[string]FileCov{}
-	totalStmts := 0
-	totalCovered := 0
+	cov := map[string]File{}
+	total := 0
+	covered := 0
 	for _, prof := range profiles {
 		fileCov := parseProfile(prof)
 		file := options.fileName(prof.FileName)
 		cov[file] = fileCov
-		totalStmts += fileCov.Stmts
-		totalCovered += fileCov.CoveredStmts
+		total += fileCov.Stmts
+		covered += fileCov.CoveredStmts
+		fileCov.CoverPct = percent(fileCov.CoveredStmts, fileCov.Stmts)
 	}
 
-	return &StatementStats{fileCov: cov, Percent: 100 * float64(totalCovered) / float64(totalStmts)}
+	return &StatementStats{fileCov: cov, CoverPct: percent(covered, total)}
 }
 
-func parseProfile(cp *cover.Profile) FileCov {
+func percent(covered, total int) float64 {
+	if total == 0 {
+		return -1
+	}
+	return 100 * float64(covered) / float64(total)
+}
+
+func parseProfile(cp *cover.Profile) File {
 	stmts := 0
 	coveredStmts := 0
 	for _, bk := range cp.Blocks {
@@ -84,36 +89,64 @@ func parseProfile(cp *cover.Profile) FileCov {
 		}
 	}
 
-	return FileCov{
-		Percent:      float64(coveredStmts) / float64(stmts),
+	return File{
+		CoverPct:     float64(coveredStmts) / float64(stmts),
 		Stmts:        stmts,
 		CoveredStmts: coveredStmts,
 	}
 }
 
-// FuncCov is a map of function names to their coverage percentage.
-type FuncCov map[string]float64
+type Function struct {
+	Name     string
+	File     string
+	CoverPct float64
+	line     int
+}
+
+type fileFuncCov map[string]Function
 
 type FunctionStats struct {
-	Percent float64
-	file    map[string]FuncCov
-	fn      FuncCov
+	CoverPct float64
+	fileCov  map[string]fileFuncCov
 }
 
-func (c *FunctionStats) Func(fn string) float64 {
-	v, ok := c.fn[fn]
-	if !ok {
-		return 0
+func (st *FunctionStats) addFunc(fn Function) {
+	file, ok := st.fileCov[fn.File]
+	if ok {
+		file[fn.Name] = fn
+		return
 	}
-	return v
+	st.fileCov[fn.File] = fileFuncCov{
+		fn.Name: fn,
+	}
 }
 
-func (c *FunctionStats) File(f string) FuncCov {
-	v, ok := c.file[f]
+func (st *FunctionStats) Func(file, fn string) float64 {
+	v, ok := st.fileCov[file]
 	if !ok {
-		return FuncCov{}
+		return -1
 	}
-	return v
+
+	cov, ok := v[fn]
+	if !ok {
+		return -1
+	}
+
+	return cov.CoverPct
+}
+
+func (st *FunctionStats) File(f string) ([]Function, bool) {
+	fileFuncs, ok := st.fileCov[f]
+	if !ok {
+		return nil, false
+	}
+
+	vals := make([]Function, 0, len(fileFuncs))
+	for _, v := range fileFuncs {
+		vals = append(vals, v)
+	}
+
+	return vals, true
 }
 
 const numFields = 3
@@ -131,9 +164,7 @@ func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats,
 	for _, opt := range opts {
 		opt(&options)
 	}
-	cov := &FunctionStats{}
-	files := map[string]FuncCov{}
-	byFunc := map[string]float64{}
+	funcStats := &FunctionStats{fileCov: map[string]fileFuncCov{}}
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
 		entry := strings.Fields(sc.Text())
@@ -147,24 +178,25 @@ func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats,
 		}
 
 		if entry[1] == "(statements)" {
-			cov.Percent = percent
+			funcStats.CoverPct = percent
 			continue
 		}
 
-		idx := strings.Index(entry[0], ".go")
-		if idx == -1 {
-			return nil, fmt.Errorf("invalid format, no go file, line: %v", sc.Text())
+		s := strings.Split(entry[0], ":")
+		if len(s) < 2 {
+			return nil, fmt.Errorf("unexpected format for filename: %v", entry[0])
 		}
 
-		file := options.fileName(entry[0][:idx+3])
+		file, line := s[0], s[1]
 
-		byFunc[entry[1]] = percent
-		f, ok := files[file]
-		if ok {
-			f[entry[1]] = percent
-			continue
+		file = options.fileName(file)
+
+		lineInt, err := strconv.Atoi(line)
+		if err != nil {
+			return nil, fmt.Errorf("invalid line number in row %v, num '%v'", sc.Text(), line)
 		}
-		files[file] = FuncCov{entry[1]: percent}
+
+		funcStats.addFunc(Function{Name: entry[1], File: file, CoverPct: percent, line: lineInt})
 	}
 
 	err := sc.Err()
@@ -172,8 +204,5 @@ func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats,
 		return nil, fmt.Errorf("error while scanning: %w", err)
 	}
 
-	cov.file = files
-	cov.fn = byFunc
-
-	return cov, nil
+	return funcStats, nil
 }

@@ -14,4 +14,4 @@ tasks:
       - golangci-lint run ./... --fix
   test:
     cmds: 
-      - go test ./... -v
+      - go test ./... -v -coverprofile=cover.out
