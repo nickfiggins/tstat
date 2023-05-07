@@ -49,12 +49,12 @@ func (p *Parser) CoverageStats(profile string) (*Coverage, error) {
 	}
 
 	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
-	funcArg := fmt.Sprintf("-func=%v", profile)
-	cmd := exec.Command(goTool, "tool", "cover", funcArg)
-	cmd.Stderr = os.Stdout
+	cmd := exec.Command(goTool, "tool", "cover", fmt.Sprintf("-func=%v", profile))
+	stderr := bytes.NewBuffer([]byte{})
+	cmd.Stderr = stderr
 	fnProfile, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get function coverage: %w", err)
+		return nil, fmt.Errorf("couldn't get function coverage: %w, stderr %v", err, stderr.String())
 	}
 
 	fnStats, err := ParseFuncProfileFromReader(bytes.NewBuffer(fnProfile), p.opts...)

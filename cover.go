@@ -71,7 +71,7 @@ func parseProfiles(profiles []*cover.Profile, options Options) *StatementStats {
 		totalCovered += fileCov.CoveredStmts
 	}
 
-	return &StatementStats{fileCov: cov, Percent: float64(totalCovered) / float64(totalStmts)}
+	return &StatementStats{fileCov: cov, Percent: 100 * float64(totalCovered) / float64(totalStmts)}
 }
 
 func parseProfile(cp *cover.Profile) FileCov {

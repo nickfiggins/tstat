@@ -2,10 +2,8 @@ package tstat_test
 
 import (
 	"path/filepath"
-	"reflect"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/nickfiggins/tstat"
 )
 
@@ -19,8 +17,15 @@ func TestRead(t *testing.T) {
 	}{
 		{
 			name:    "happy",
-			covFile: "cover.out",
-			want:    nil,
+			covFile: "prog/cover.out",
+			want: &tstat.Coverage{
+				Function: &tstat.FunctionStats{
+					Percent: 25,
+				},
+				Statement: &tstat.StatementStats{
+					Percent: 25,
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -31,8 +36,12 @@ func TestRead(t *testing.T) {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Read() = %v", cmp.Diff(got, tt.want))
+			if got.Statement.Percent != tt.want.Statement.Percent {
+				t.Errorf("Read() = got statement pct %v, wanted %v", got.Statement.Percent, tt.want.Statement.Percent)
+			}
+
+			if got.Function.Percent != tt.want.Function.Percent {
+				t.Errorf("Read() = got function pct %v, wanted %v", got.Function.Percent, tt.want.Function.Percent)
 			}
 		})
 	}
