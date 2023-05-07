@@ -1,32 +1,78 @@
 package tstat
 
 import (
+	"bytes"
+	"fmt"
 	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
 )
 
-type Coverage struct {
-	Function  FunctionStats
-	Statement CoverStats
+type Parser struct {
+	opts []ParseOpts
 }
 
-type CoverageParser struct {
-	profile     io.Reader
-	funcProfile io.Reader
-	opts        []ParseOpts
+func NewParser(opts ...ParseOpts) *Parser {
+	return &Parser{opts}
 }
 
-func NewCoverageParser(profile, funcProfile io.Reader, opts ...ParseOpts) *CoverageParser {
-	return &CoverageParser{profile: profile, funcProfile: funcProfile, opts: opts}
+type Options struct {
+	trimModule string
 }
 
-func (cp *CoverageParser) Parse(opts ...ParseOpts) (*Coverage, error) {
-	opts = append(opts, cp.opts...)
-	c, err := ParseCoverProfileFromReader(cp.profile, opts...)
+type ParseOpts func(*Options)
+
+func TrimModule(name string) ParseOpts {
+	return func(o *Options) {
+		o.trimModule = name
+	}
+}
+
+func (o Options) fileName(full string) string {
+	if o.trimModule == "" {
+		return strings.TrimPrefix(full, o.trimModule)
+	}
+	return full
+}
+
+func (p *Parser) CoverageStats(profile string) (*Coverage, error) {
+	pf, err := os.Open(profile)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't open cover profile: %w", err)
+	}
+	covStats, err := ParseCoverProfileFromReader(pf, p.opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := ParseFuncProfileFromReader(cp.funcProfile, opts...)
+	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
+	funcArg := fmt.Sprintf("-func=%v", profile)
+	cmd := exec.Command(goTool, "tool", "cover", funcArg)
+	cmd.Stderr = os.Stdout
+	fnProfile, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't get function coverage: %w", err)
+	}
+
+	fnStats, err := ParseFuncProfileFromReader(bytes.NewBuffer(fnProfile), p.opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Coverage{Statement: covStats, Function: fnStats}, nil
+}
+
+func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts ...ParseOpts) (*Coverage, error) {
+	opts = append(opts, p.opts...)
+	c, err := ParseCoverProfileFromReader(profile, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := ParseFuncProfileFromReader(funcProfile, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -34,15 +80,17 @@ func (cp *CoverageParser) Parse(opts ...ParseOpts) (*Coverage, error) {
 	return &Coverage{Function: f, Statement: c}, nil
 }
 
-type TestParser struct {
-	out  io.Reader
-	opts []ParseOpts
+func (p *Parser) TestStatsFromReader(jsonOutput io.Reader) (*TestStats, error) {
+	return ParseTestOutput(jsonOutput)
 }
 
-func NewTestParser(jsonOut io.Reader, opts ...ParseOpts) *TestParser {
-	return &TestParser{out: jsonOut, opts: opts}
-}
+func (p *Parser) TestStats(outputFile string) (*TestStats, error) {
+	of, err := os.Open(outputFile)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't open test output file: %w", err)
+	}
 
-func (tp *TestParser) Parse(_ ...ParseOpts) (*TestStats, error) {
-	return ParseTestOutput(tp.out)
+	defer of.Close()
+
+	return ParseTestOutput(of)
 }
