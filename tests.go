@@ -9,11 +9,11 @@ import (
 )
 
 type TestOutput struct {
-	subtests map[string]TestOutput
-	Action   string `json:"Action"`
-	Output   string `json:"Output"`
-	Test     string `json:"Test"`
-	Package  string `json:"Package"`
+	// TODO: subtests map[string]TestOutput
+	Action  string `json:"Action"`
+	Output  string `json:"Output"`
+	Test    string `json:"Test"`
+	Package string `json:"Package"`
 }
 
 type TestStats struct {
@@ -91,17 +91,17 @@ func addTest(o TestOutput, tests map[string]TestOutput, filter func(out TestOutp
 	}
 }
 
-func addSubtests(out TestOutput, m map[string]TestOutput) {
-	div := strings.Split(out.Test, "/")
-	if len(div) < 2 {
-		return
-	}
-	subs := div[1:]
-	v, ok := m[out.Test]
-	if ok {
-		for _, s := range subs {
-			v.subtests[s]
-			addSubtests(out, m)
-		}
-	}
-}
+// func addSubtests(out TestOutput, m map[string]TestOutput) {
+// 	div := strings.Split(out.Test, "/")
+// 	if len(div) < 2 {
+// 		return
+// 	}
+// 	subs := div[1:]
+// 	v, ok := m[out.Test]
+// 	if ok {
+// 		for _, s := range subs {
+// 			v.subtests[s]
+// 			addSubtests(out,)
+// 		}
+// 	}
+// }
