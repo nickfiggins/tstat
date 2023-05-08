@@ -33,16 +33,16 @@ func statusFilter(statuses ...string) func(out TestOutput) bool {
 	}
 }
 
-func ParseTestOutput(jsonOut io.Reader) (*TestStats, error) {
+func ParseTestOutput(jsonOut io.Reader) (TestStats, error) {
 	outputs, err := readByLine(jsonOut)
 	if err != nil {
-		return nil, err
+		return TestStats{}, err
 	}
 
 	tests := byTestName(outputs, statusFilter("pass", "fail"))
 	failed := byTestName(outputs, statusFilter("fail"))
 
-	return &TestStats{Tests: tests, passed: len(failed) == 0, cmdOut: consoleOutputs(outputs)}, nil
+	return TestStats{Tests: tests, passed: len(failed) == 0, cmdOut: consoleOutputs(outputs)}, nil
 }
 
 func readByLine(r io.Reader) ([]TestOutput, error) {

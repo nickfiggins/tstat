@@ -40,14 +40,14 @@ func (o Options) fileName(full string) string {
 	return full
 }
 
-func (p *Parser) CoverageStats(profile string) (*Coverage, error) {
+func (p *Parser) CoverageStats(profile string) (Coverage, error) {
 	pf, err := os.Open(profile)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't open cover profile: %w", err)
+		return Coverage{}, fmt.Errorf("couldn't open cover profile: %w", err)
 	}
 	covStats, err := ParseCoverProfileFromReader(pf, p.opts...)
 	if err != nil {
-		return nil, err
+		return Coverage{}, err
 	}
 
 	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
@@ -56,22 +56,22 @@ func (p *Parser) CoverageStats(profile string) (*Coverage, error) {
 	cmd.Stderr = stderr
 	fnProfile, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get function coverage: %w, stderr %v", err, stderr.String())
+		return Coverage{}, fmt.Errorf("couldn't get function coverage: %w, stderr %v", err, stderr.String())
 	}
 
 	fnStats, err := ParseFuncProfileFromReader(bytes.NewBuffer(fnProfile), p.opts...)
 	if err != nil {
-		return nil, err
+		return Coverage{}, err
 	}
 
-	return &Coverage{Statement: covStats, Function: fnStats}, nil
+	return Coverage{Statement: &covStats, Function: &fnStats}, nil
 }
 
-func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts ...ParseOpts) (*Coverage, error) {
+func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts ...ParseOpts) (Coverage, error) {
 	opts = append(opts, p.opts...)
 
-	var stmtStats *StatementStats
-	var fnStats *FunctionStats
+	var stmtStats StatementStats
+	var fnStats FunctionStats
 	eg := errgroup.Group{}
 	eg.Go(func() error {
 		stmt, err := ParseCoverProfileFromReader(profile, opts...)
@@ -93,20 +93,20 @@ func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts .
 
 	err := eg.Wait()
 	if err != nil {
-		return nil, err
+		return Coverage{}, err
 	}
 
-	return &Coverage{Function: fnStats, Statement: stmtStats}, nil
+	return Coverage{Function: &fnStats, Statement: &stmtStats}, nil
 }
 
-func (p *Parser) TestStatsFromReader(jsonOutput io.Reader) (*TestStats, error) {
+func (p *Parser) TestStatsFromReader(jsonOutput io.Reader) (TestStats, error) {
 	return ParseTestOutput(jsonOutput)
 }
 
-func (p *Parser) TestStats(outputFile string) (*TestStats, error) {
+func (p *Parser) TestStats(outputFile string) (TestStats, error) {
 	of, err := os.Open(outputFile)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't open test output file: %w", err)
+		return TestStats{}, fmt.Errorf("couldn't open test output file: %w", err)
 	}
 
 	defer of.Close()

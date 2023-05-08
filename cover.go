@@ -32,31 +32,31 @@ func (st *StatementStats) File(f string) (File, bool) {
 	return v, ok
 }
 
-func ParseCoverProfile(fileName string, opts ...ParseOpts) (*StatementStats, error) {
+func ParseCoverProfile(fileName string, opts ...ParseOpts) (StatementStats, error) {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
 	}
 	profiles, err := cover.ParseProfiles(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse coverage from file: %w", err)
+		return StatementStats{}, fmt.Errorf("couldn't parse coverage from file: %w", err)
 	}
 	return parseProfiles(profiles, options), nil
 }
 
-func ParseCoverProfileFromReader(r io.Reader, opts ...ParseOpts) (*StatementStats, error) {
+func ParseCoverProfileFromReader(r io.Reader, opts ...ParseOpts) (StatementStats, error) {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
 	}
 	profiles, err := cover.ParseProfilesFromReader(r)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse coverage from reader: %w", err)
+		return StatementStats{}, fmt.Errorf("couldn't parse coverage from reader: %w", err)
 	}
 	return parseProfiles(profiles, options), nil
 }
 
-func parseProfiles(profiles []*cover.Profile, options Options) *StatementStats {
+func parseProfiles(profiles []*cover.Profile, options Options) StatementStats {
 	cov := map[string]File{}
 	total := 0
 	covered := 0
@@ -69,7 +69,7 @@ func parseProfiles(profiles []*cover.Profile, options Options) *StatementStats {
 		fileCov.CoverPct = percent(fileCov.CoveredStmts, fileCov.Stmts)
 	}
 
-	return &StatementStats{fileCov: cov, CoverPct: percent(covered, total)}
+	return StatementStats{fileCov: cov, CoverPct: percent(covered, total)}
 }
 
 func percent(covered, total int) float64 {
@@ -151,20 +151,20 @@ func (st *FunctionStats) File(f string) ([]Function, bool) {
 
 const numFields = 3
 
-func ParseFuncProfile(fileName string) (*FunctionStats, error) {
+func ParseFuncProfile(fileName string) (FunctionStats, error) {
 	f, err := os.Open(fileName)
 	if err != nil {
-		return nil, err
+		return FunctionStats{}, err
 	}
 	return ParseFuncProfileFromReader(f)
 }
 
-func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats, error) {
+func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (FunctionStats, error) {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
 	}
-	funcStats := &FunctionStats{fileCov: map[string]fileFuncCov{}}
+	funcStats := FunctionStats{fileCov: map[string]fileFuncCov{}}
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
 		entry := strings.Fields(sc.Text())
@@ -174,7 +174,7 @@ func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats,
 
 		percent, err := strconv.ParseFloat(strings.Trim(entry[2], "%"), 64)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't convert percent to float %w", err)
+			return FunctionStats{}, fmt.Errorf("couldn't convert percent to float %w", err)
 		}
 
 		if entry[1] == "(statements)" {
@@ -184,7 +184,7 @@ func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats,
 
 		s := strings.Split(entry[0], ":")
 		if len(s) < 2 {
-			return nil, fmt.Errorf("unexpected format for filename: %v", entry[0])
+			return FunctionStats{}, fmt.Errorf("unexpected format for filename: %v", entry[0])
 		}
 
 		file, line := s[0], s[1]
@@ -193,7 +193,7 @@ func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats,
 
 		lineInt, err := strconv.Atoi(line)
 		if err != nil {
-			return nil, fmt.Errorf("invalid line number in row %v, num '%v'", sc.Text(), line)
+			return FunctionStats{}, fmt.Errorf("invalid line number in row %v, num '%v'", sc.Text(), line)
 		}
 
 		funcStats.addFunc(Function{Name: entry[1], File: file, CoverPct: percent, line: lineInt})
@@ -201,7 +201,7 @@ func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (*FunctionStats,
 
 	err := sc.Err()
 	if err != nil {
-		return nil, fmt.Errorf("error while scanning: %w", err)
+		return FunctionStats{}, fmt.Errorf("error while scanning: %w", err)
 	}
 
 	return funcStats, nil
