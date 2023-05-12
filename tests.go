@@ -37,7 +37,7 @@ type Test struct {
 }
 
 func (t *Test) count() int {
-	count := 0
+	count := 1
 	for _, sub := range t.Subtests {
 		count += sub.count()
 	}
