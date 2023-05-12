@@ -1,13 +1,12 @@
-package tstat_test
+# TStat
 
-import (
-	"fmt"
-	"log"
+Tstat provides information on Go test suites and functionality to make it easier to
+query for information on code coverage or test cases.
 
-	"github.com/nickfiggins/tstat"
-)
+## Usage
 
-func ExampleCover() {
+### Coverage
+```go
 	parser := tstat.NewParser(tstat.TrimModule("github.com/nickfiggins/tstat/"))
 
 	stats, err := parser.CoverageStats("testdata/prog/cover.out")
@@ -25,17 +24,21 @@ func ExampleCover() {
 	// total coverage: 25%
 	// function: add coverage: 100%
 	// function: isOdd coverage: 0%
-}
+```
 
-func ExampleTest() {
+### Tests
+
+```go
 	parser := tstat.NewParser()
 
 	stats, err := parser.TestRun("testdata/prog/test.json")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	// TODO: display more functionality here
 
 	fmt.Println(stats.Count())
 	// Output: 13
-}
+
+   fmt.Printf("%+v\n", stats.Tests[0])
+   // Output: &{Subtests:[] Action:fail Name:TestHandleQuestion_Error SubName:TestHandleQuestion_Error Package:github.com/nickfiggins/gotestsimulate/gogeo}
+```

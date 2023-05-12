@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -124,6 +125,10 @@ func (st *FunctionStats) File(f string) ([]Function, bool) {
 	for _, v := range fileFuncs {
 		vals = append(vals, v)
 	}
+
+	sort.Slice(vals, func(i, j int) bool {
+		return vals[i].Name < vals[j].Name
+	})
 
 	return vals, true
 }
