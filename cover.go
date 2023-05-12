@@ -31,32 +31,11 @@ func (st *StatementStats) File(f string) (File, bool) {
 	v, ok := st.fileCov[f]
 	return v, ok
 }
-
-func ParseCoverProfile(fileName string, opts ...ParseOpts) (StatementStats, error) {
+func parseProfiles(profiles []*cover.Profile, opts ...ParseOpts) StatementStats {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
 	}
-	profiles, err := cover.ParseProfiles(fileName)
-	if err != nil {
-		return StatementStats{}, fmt.Errorf("couldn't parse coverage from file: %w", err)
-	}
-	return parseProfiles(profiles, options), nil
-}
-
-func ParseCoverProfileFromReader(r io.Reader, opts ...ParseOpts) (StatementStats, error) {
-	var options Options
-	for _, opt := range opts {
-		opt(&options)
-	}
-	profiles, err := cover.ParseProfilesFromReader(r)
-	if err != nil {
-		return StatementStats{}, fmt.Errorf("couldn't parse coverage from reader: %w", err)
-	}
-	return parseProfiles(profiles, options), nil
-}
-
-func parseProfiles(profiles []*cover.Profile, options Options) StatementStats {
 	cov := map[string]File{}
 	total := 0
 	covered := 0

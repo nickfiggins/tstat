@@ -1,70 +1,136 @@
 package tstat
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
-	"io"
+	"sort"
 	"strings"
+	"time"
+
+	"github.com/nickfiggins/tstat/internal/gotest"
 )
 
-type TestOutput struct {
-	// TODO: subtests map[string]TestOutput
-	Action  string `json:"Action"`
-	Output  string `json:"Output"`
-	Test    string `json:"Test"`
-	Package string `json:"Package"`
+type TestRun struct {
+	start, end time.Time
+	Tests      []*Test
+	Passed     bool
+	cmdOut     string
 }
 
-type TestStats struct {
-	Tests  map[string]TestOutput
-	passed bool
-	cmdOut string
+func (ts *TestRun) Duration() time.Duration {
+	return ts.end.Sub(ts.start)
 }
 
-func statusFilter(statuses ...string) func(out TestOutput) bool {
-	return func(out TestOutput) bool {
-		for _, s := range statuses {
-			if out.Action == s {
-				return true
-			}
+func (ts *TestRun) Count() int {
+	count := 0
+	for _, test := range ts.Tests {
+		count += test.count()
+	}
+	return count
+}
+
+type Test struct {
+	Subtests []Test
+	Action   string `json:"Action"`
+	Name     string
+	SubName  string
+	Package  string `json:"Package"`
+}
+
+func (t *Test) count() int {
+	count := 0
+	for _, sub := range t.Subtests {
+		count += sub.count()
+	}
+	return count
+}
+
+func (t *Test) addSubtests(sub Test) {
+	subs := strings.Split(sub.Name, "/")
+	nestedCount := len(subs)
+	if nestedCount == 2 {
+		t.Subtests = append(t.Subtests, sub)
+		return
+	}
+
+	for _, subtest := range t.Subtests {
+		if strings.Contains(sub.Name, subtest.Name) {
+			subtest.addSubtests(sub)
 		}
-		return false
 	}
 }
 
-func ParseTestOutput(jsonOut io.Reader) (TestStats, error) {
-	outputs, err := readByLine(jsonOut)
-	if err != nil {
-		return TestStats{}, err
+func toTest(to gotest.Output) Test {
+	nameParts := strings.Split(to.Test, "/")
+	return Test{
+		Subtests: make([]Test, 0),
+		Action:   to.Action,
+		Name:     to.Test,
+		Package:  to.Package,
+		SubName:  nameParts[len(nameParts)-1],
 	}
-
-	tests := byTestName(outputs, statusFilter("pass", "fail"))
-	failed := byTestName(outputs, statusFilter("fail"))
-
-	return TestStats{Tests: tests, passed: len(failed) == 0, cmdOut: consoleOutputs(outputs)}, nil
 }
 
-func readByLine(r io.Reader) ([]TestOutput, error) {
-	sc := bufio.NewScanner(r)
-	var lines []TestOutput
-	for sc.Scan() {
-		var line TestOutput
-		b := sc.Bytes()
-		err := json.Unmarshal(b, &line)
-		if err != nil {
-			return nil, fmt.Errorf("couldn't unmarshal json: %w, bytes: %v", err, string(b))
+func parseTestOutput(outputs []gotest.Output) (TestRun, error) {
+	output := byTestName(outputs)
+	start, end := start(output), output[len(output)-1]
+	sort.Sort(byTestName(outputs))
+
+	var tests []Test
+	for _, out := range outputs {
+		if out.Test != "" && gotest.IsFinal(out.Action) {
+			tests = append(tests, toTest(out))
 		}
-		lines = append(lines, line)
 	}
-	err := sc.Err()
+
+	rootTests, err := nestSubtests(tests)
 	if err != nil {
-		return nil, fmt.Errorf("error while scanning: %w", err)
+		return TestRun{}, err
 	}
-	return lines, nil
+
+	return TestRun{
+		start: start.Time, end: end.Time,
+		Tests:  rootTests,
+		Passed: len(withStatus(rootTests, gotest.Fail)) == 0,
+		cmdOut: consoleOutputs(outputs),
+	}, nil
 }
 
-func consoleOutputs(outputs []TestOutput) string {
+func nestSubtests(tests []Test) ([]*Test, error) {
+	rootTests := map[string]*Test{}
+	for _, to := range tests {
+		subs := strings.Split(to.Name, "/")
+		if len(subs) == 1 {
+			out := to
+			rootTests[to.Name] = &out
+			continue
+		}
+		test, ok := rootTests[subs[0]]
+		if !ok && len(subs) > 1 {
+			return nil, fmt.Errorf("subtest found without corresponding parent: %v", to.Name)
+		}
+		test.addSubtests(to)
+	}
+
+	var testSlice []*Test
+	for _, t := range rootTests {
+		testSlice = append(testSlice, t)
+	}
+
+	return testSlice, nil
+}
+
+func withStatus(tests []*Test, s gotest.Action) []*Test {
+	sl := make([]*Test, 0)
+	strStatus := s.String()
+	for _, test := range tests {
+		if test.Action == strStatus {
+			sl = append(sl, test)
+		}
+	}
+	return sl
+}
+
+func consoleOutputs(outputs []gotest.Output) string {
 	sb := strings.Builder{}
 	for _, o := range outputs {
 		if o.Action == "output" {
@@ -75,33 +141,21 @@ func consoleOutputs(outputs []TestOutput) string {
 	return sb.String()
 }
 
-// byTestName returns a map of TestOutput structs by the test name, only
-// including those which the filter func returns true.
-func byTestName(outputs []TestOutput, filter func(out TestOutput) bool) map[string]TestOutput {
-	tests := map[string]TestOutput{}
-	for _, o := range outputs {
-		addTest(o, tests, filter)
+// byTestName sorts tests by their name, which ensures that all parent tests come
+// before the subtests.
+type byTestName []gotest.Output
+
+func start(b []gotest.Output) gotest.Output {
+	for _, out := range b {
+		if out.Action == "start" {
+			return out
+		}
 	}
-	return tests
+	return gotest.Output{}
 }
 
-func addTest(o TestOutput, tests map[string]TestOutput, filter func(out TestOutput) bool) {
-	if o.Test != "" && filter(o) {
-		tests[o.Test] = o
-	}
+func (b byTestName) Len() int      { return len(b) }
+func (b byTestName) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
+func (b byTestName) Less(i, j int) bool {
+	return b[i].Test < b[j].Test
 }
-
-// func addSubtests(out TestOutput, m map[string]TestOutput) {
-// 	div := strings.Split(out.Test, "/")
-// 	if len(div) < 2 {
-// 		return
-// 	}
-// 	subs := div[1:]
-// 	v, ok := m[out.Test]
-// 	if ok {
-// 		for _, s := range subs {
-// 			v.subtests[s]
-// 			addSubtests(out,)
-// 		}
-// 	}
-// }

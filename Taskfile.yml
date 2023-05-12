@@ -15,3 +15,7 @@ tasks:
   test:
     cmds: 
       - go test ./... -v -coverprofile=cover.out
+  cov:
+    cmds:
+    - go tool cover -html=cover.out -o cover.html
+    - open cover.html

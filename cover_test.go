@@ -12,7 +12,7 @@ func TestParseFuncProfileFromReader(t *testing.T) {
 	tests := []struct {
 		name       string
 		funcReader io.Reader
-		want       *FunctionStats
+		want       FunctionStats
 		wantErr    bool
 	}{
 		{
@@ -21,7 +21,7 @@ func TestParseFuncProfileFromReader(t *testing.T) {
 				`github.com/nickfiggins/tstat/testdata/prog/prog.go:3:	add		100.0%
 				 github.com/nickfiggins/tstat/testdata/prog/prog.go:7:	isOdd		0.0%
 				 total:							(statements)	25.0%`),
-			want: &FunctionStats{
+			want: FunctionStats{
 				CoverPct: 25,
 				fileCov: map[string]fileFuncCov{
 					"github.com/nickfiggins/tstat/testdata/prog/prog.go": {

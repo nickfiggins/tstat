@@ -1,26 +1,32 @@
 package tstat_test
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/nickfiggins/tstat"
+	"github.com/nickfiggins/tstat/internal/gotest"
+	"golang.org/x/tools/cover"
 )
+
+func mockTestParser(r io.Reader) ([]gotest.Output, error) {
+	return nil, nil
+}
+
+func mockCoverParser(r io.Reader) ([]*cover.Profile, error) {
+	return nil, nil
+}
 
 func Test_CoverageStats(t *testing.T) {
 	testDir := "testdata/"
 	tests := []struct {
-		name        string
-		covFile     string
-		wantPercent float64
-		wantErr     bool
+		name, covFile string
+		wantPercent   float64
+		wantErr       bool
 	}{
-		{
-			name:        "happy",
-			covFile:     "prog/cover.out",
-			wantPercent: 25,
-		},
+		{name: "happy", covFile: "prog/cover.out", wantPercent: 25},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -44,18 +50,11 @@ func Test_CoverageStats(t *testing.T) {
 func Test_CoverageStatsFromReaders(t *testing.T) {
 	testDir := "testdata/"
 	tests := []struct {
-		name        string
-		covFile     string
-		funcFile    string
-		wantPercent float64
-		wantErr     bool
+		name, covFile, funcFile string
+		wantPercent             float64
+		wantErr                 bool
 	}{
-		{
-			name:        "happy",
-			covFile:     "prog/cover.out",
-			funcFile:    "prog/func.out",
-			wantPercent: 25,
-		},
+		{name: "happy", covFile: "prog/cover.out", funcFile: "prog/func.out", wantPercent: 25},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
