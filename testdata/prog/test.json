@@ -1,64 +1,8 @@
-{"Time":"2023-04-30T20:48:52.424395-04:00","Action":"start","Package":"github.com/nickfiggins/gotestsimulate/gogeo"}
-{"Time":"2023-04-30T20:48:52.635662-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Output":"-test.shuffle 1680975987317555001\n"}
-{"Time":"2023-04-30T20:48:52.635736-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion_Error"}
-{"Time":"2023-04-30T20:48:52.635758-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion_Error","Output":"=== RUN   TestHandleQuestion_Error\n"}
-{"Time":"2023-04-30T20:48:52.635887-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion_Error","Output":"    handlers_test.go:65: got timesCalled 0, wanted 1\n"}
-{"Time":"2023-04-30T20:48:52.635922-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion_Error","Output":"    handlers_test.go:70: got call values to NewQuestion: [], wanted [1]\n"}
-{"Time":"2023-04-30T20:48:52.635958-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion_Error","Output":"--- FAIL: TestHandleQuestion_Error (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.635968-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion_Error","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.635985-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion"}
-{"Time":"2023-04-30T20:48:52.635992-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion","Output":"=== RUN   Test_cityService_NewQuestion\n"}
-{"Time":"2023-04-30T20:48:52.635999-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion/seed_is_zero"}
-{"Time":"2023-04-30T20:48:52.636006-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion/seed_is_zero","Output":"=== RUN   Test_cityService_NewQuestion/seed_is_zero\n"}
-{"Time":"2023-04-30T20:48:52.636028-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion/seed_is_zero","Output":"    cities_test.go:53: cityService.NewQuestion() = \u0026{What's the capital of Mexico?}, want \u0026{What's the capital of Peru?}\n"}
-{"Time":"2023-04-30T20:48:52.636043-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion","Output":"--- FAIL: Test_cityService_NewQuestion (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.636052-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion/seed_is_zero","Output":"    --- FAIL: Test_cityService_NewQuestion/seed_is_zero (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.636061-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion/seed_is_zero","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.636075-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_NewQuestion","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.636082-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd"}
-{"Time":"2023-04-30T20:48:52.636088-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd","Output":"=== RUN   Test_shouldAdd\n"}
-{"Time":"2023-04-30T20:48:52.636105-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd","Output":"--- SKIP: Test_shouldAdd (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.636113-04:00","Action":"skip","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.63612-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestCitiesDB_Random"}
-{"Time":"2023-04-30T20:48:52.636149-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestCitiesDB_Random","Output":"=== RUN   TestCitiesDB_Random\n"}
-{"Time":"2023-04-30T20:48:52.639254-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestCitiesDB_Random","Output":"    db_test.go:27: wanted err to be nil, but got err:  no cities in db\n"}
-{"Time":"2023-04-30T20:48:52.639307-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestCitiesDB_Random","Output":"--- FAIL: TestCitiesDB_Random (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.639323-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestCitiesDB_Random","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.639334-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion"}
-{"Time":"2023-04-30T20:48:52.639343-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion","Output":"=== RUN   TestHandleQuestion\n"}
-{"Time":"2023-04-30T20:48:52.640285-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion/happy_path"}
-{"Time":"2023-04-30T20:48:52.64032-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion/happy_path","Output":"=== RUN   TestHandleQuestion/happy_path\n"}
-{"Time":"2023-04-30T20:48:52.640424-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion/happy_path","Output":"    handlers_test.go:41: HandleQuestion() returned status 500, want 200\n"}
-{"Time":"2023-04-30T20:48:52.640449-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion","Output":"--- FAIL: TestHandleQuestion (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.640459-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion/happy_path","Output":"    --- FAIL: TestHandleQuestion/happy_path (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.640467-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion/happy_path","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.640476-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleQuestion","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.640482-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd_ZeroPopulation"}
-{"Time":"2023-04-30T20:48:52.640489-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd_ZeroPopulation","Output":"=== RUN   Test_shouldAdd_ZeroPopulation\n"}
-{"Time":"2023-04-30T20:48:52.640497-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd_ZeroPopulation","Output":"--- SKIP: Test_shouldAdd_ZeroPopulation (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.640504-04:00","Action":"skip","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_shouldAdd_ZeroPopulation","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.64051-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer"}
-{"Time":"2023-04-30T20:48:52.640516-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer","Output":"=== RUN   Test_cityService_CheckAnswer\n"}
-{"Time":"2023-04-30T20:48:52.640534-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer/answer_is_valid"}
-{"Time":"2023-04-30T20:48:52.640542-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer/answer_is_valid","Output":"=== RUN   Test_cityService_CheckAnswer/answer_is_valid\n"}
-{"Time":"2023-04-30T20:48:52.640549-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer","Output":"--- PASS: Test_cityService_CheckAnswer (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.640577-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer/answer_is_valid","Output":"    --- PASS: Test_cityService_CheckAnswer/answer_is_valid (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.640586-04:00","Action":"pass","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer/answer_is_valid","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.640592-04:00","Action":"pass","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_cityService_CheckAnswer","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.640599-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer"}
-{"Time":"2023-04-30T20:48:52.640613-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer","Output":"=== RUN   TestHandleAnswer\n"}
-{"Time":"2023-04-30T20:48:52.641339-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer/happy_path"}
-{"Time":"2023-04-30T20:48:52.641362-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer/happy_path","Output":"=== RUN   TestHandleAnswer/happy_path\n"}
-{"Time":"2023-04-30T20:48:52.641532-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer/happy_path","Output":"    handlers_test.go:111: got http status 400, wanted 200\n"}
-{"Time":"2023-04-30T20:48:52.641556-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer","Output":"--- FAIL: TestHandleAnswer (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.641572-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer/happy_path","Output":"    --- FAIL: TestHandleAnswer/happy_path (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.642066-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer/happy_path","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.642188-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"TestHandleAnswer","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.642203-04:00","Action":"run","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_getArchive"}
-{"Time":"2023-04-30T20:48:52.64222-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_getArchive","Output":"=== RUN   Test_getArchive\n"}
-{"Time":"2023-04-30T20:48:52.642249-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_getArchive","Output":"--- PASS: Test_getArchive (0.00s)\n"}
-{"Time":"2023-04-30T20:48:52.642264-04:00","Action":"pass","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Test":"Test_getArchive","Elapsed":0}
-{"Time":"2023-04-30T20:48:52.642276-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Output":"FAIL\n"}
-{"Time":"2023-04-30T20:48:52.644114-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Output":"\tgithub.com/nickfiggins/gotestsimulate/gogeo\tcoverage: 48.3% of statements\n"}
-{"Time":"2023-04-30T20:48:52.645889-04:00","Action":"output","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Output":"FAIL\tgithub.com/nickfiggins/gotestsimulate/gogeo\t0.221s\n"}
-{"Time":"2023-04-30T20:48:52.645908-04:00","Action":"fail","Package":"github.com/nickfiggins/gotestsimulate/gogeo","Elapsed":0.222}
+{"Time":"2023-05-13T21:30:15.409912-04:00","Action":"start","Package":"github.com/nickfiggins/tstat/testdata/prog"}
+{"Time":"2023-05-13T21:30:15.587441-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/testdata/prog","Test":"TestAdd"}
+{"Time":"2023-05-13T21:30:15.587512-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/testdata/prog","Test":"TestAdd","Output":"=== RUN   TestAdd\n"}
+{"Time":"2023-05-13T21:30:15.587549-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/testdata/prog","Test":"TestAdd","Output":"--- PASS: TestAdd (0.00s)\n"}
+{"Time":"2023-05-13T21:30:15.587555-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/testdata/prog","Test":"TestAdd","Elapsed":0}
+{"Time":"2023-05-13T21:30:15.587569-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/testdata/prog","Output":"PASS\n"}
+{"Time":"2023-05-13T21:30:15.587917-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/testdata/prog","Output":"ok  \tgithub.com/nickfiggins/tstat/testdata/prog\t0.177s\n"}
+{"Time":"2023-05-13T21:30:15.59089-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/testdata/prog","Elapsed":0.181}

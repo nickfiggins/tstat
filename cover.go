@@ -1,14 +1,9 @@
 package tstat
 
 import (
-	"bufio"
-	"fmt"
-	"io"
-	"os"
 	"sort"
-	"strconv"
-	"strings"
 
+	"github.com/nickfiggins/tstat/internal/gofunc"
 	"golang.org/x/tools/cover"
 )
 
@@ -32,7 +27,7 @@ func (st *StatementStats) File(f string) (File, bool) {
 	v, ok := st.fileCov[f]
 	return v, ok
 }
-func parseProfiles(profiles []*cover.Profile, opts ...ParseOpts) StatementStats {
+func parseProfiles(profiles []*cover.Profile, opts ...ParseOpt) StatementStats {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
@@ -133,60 +128,18 @@ func (st *FunctionStats) File(f string) ([]Function, bool) {
 	return vals, true
 }
 
-const numFields = 3
-
-func ParseFuncProfile(fileName string) (FunctionStats, error) {
-	f, err := os.Open(fileName)
-	if err != nil {
-		return FunctionStats{}, err
-	}
-	return ParseFuncProfileFromReader(f)
-}
-
-func ParseFuncProfileFromReader(r io.Reader, opts ...ParseOpts) (FunctionStats, error) {
+func parseFuncProfile(output gofunc.Output, opts ...ParseOpt) FunctionStats {
 	var options Options
 	for _, opt := range opts {
 		opt(&options)
 	}
 	funcStats := FunctionStats{fileCov: map[string]fileFuncCov{}}
-	sc := bufio.NewScanner(r)
-	for sc.Scan() {
-		entry := strings.Fields(sc.Text())
-		if len(entry) < numFields {
-			continue
-		}
-
-		percent, err := strconv.ParseFloat(strings.Trim(entry[2], "%"), 64)
-		if err != nil {
-			return FunctionStats{}, fmt.Errorf("couldn't convert percent to float %w", err)
-		}
-
-		if entry[1] == "(statements)" {
-			funcStats.CoverPct = percent
-			continue
-		}
-
-		s := strings.Split(entry[0], ":")
-		if len(s) < 2 {
-			return FunctionStats{}, fmt.Errorf("unexpected format for filename: %v", entry[0])
-		}
-
-		file, line := s[0], s[1]
-
-		file = options.fileName(file)
-
-		lineInt, err := strconv.Atoi(line)
-		if err != nil {
-			return FunctionStats{}, fmt.Errorf("invalid line number in row %v, num '%v'", sc.Text(), line)
-		}
-
-		funcStats.addFunc(Function{Name: entry[1], File: file, CoverPct: percent, line: lineInt})
+	for _, fn := range output.Funcs {
+		file := options.fileName(fn.File)
+		funcStats.addFunc(Function{Name: fn.Function, File: file, CoverPct: fn.Percent, line: fn.Line})
 	}
 
-	err := sc.Err()
-	if err != nil {
-		return FunctionStats{}, fmt.Errorf("error while scanning: %w", err)
-	}
+	funcStats.CoverPct = output.Percent
 
-	return funcStats, nil
+	return funcStats
 }

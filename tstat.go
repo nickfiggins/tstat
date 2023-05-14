@@ -2,6 +2,7 @@ package tstat
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,34 +11,46 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/nickfiggins/tstat/internal/gofunc"
 	"github.com/nickfiggins/tstat/internal/gotest"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/tools/cover"
 )
 
 type Parser struct {
-	opts        []ParseOpts
+	opts        []ParseOpt
 	testParser  func(io.Reader) ([]gotest.Output, error)
 	coverParser func(io.Reader) ([]*cover.Profile, error)
+	funcParser  func(io.Reader) (gofunc.Output, error)
 }
 
-func NewParser(opts ...ParseOpts) *Parser {
+func NewParser(opts ...ParseOpt) *Parser {
 	return &Parser{
 		opts:        opts,
 		testParser:  gotest.ReadJSON,
 		coverParser: cover.ParseProfilesFromReader,
+		funcParser:  gofunc.Read,
 	}
 }
 
 type Options struct {
 	trimModule string
+	out        io.Writer
 }
 
-type ParseOpts func(*Options)
+type ParseOpt func(*Options)
 
-func TrimModule(name string) ParseOpts {
+// TrimModule will trim the given prefix (likely the name of a package or module)
+// from all object names returned.
+func TrimModule(name string) ParseOpt {
 	return func(o *Options) {
 		o.trimModule = name
+	}
+}
+
+func WriteTo(w io.Writer) ParseOpt {
+	return func(o *Options) {
+		o.out = w
 	}
 }
 
@@ -57,17 +70,19 @@ func (p *Parser) CoverageStats(profile string) (Coverage, error) {
 	if err != nil {
 		return Coverage{}, err
 	}
-	covStats := parseProfiles(profiles, p.opts...)
 
 	fnOut, err := p.runFuncCover(profile)
 	if err != nil {
 		return Coverage{}, err
 	}
 
-	fnStats, err := ParseFuncProfileFromReader(bytes.NewBuffer(fnOut), p.opts...)
+	output, err := p.funcParser(bytes.NewBuffer(fnOut))
 	if err != nil {
 		return Coverage{}, err
 	}
+
+	covStats := parseProfiles(profiles, p.opts...)
+	fnStats := parseFuncProfile(output, p.opts...)
 
 	return Coverage{Statement: &covStats, Function: &fnStats}, nil
 }
@@ -75,16 +90,18 @@ func (p *Parser) CoverageStats(profile string) (Coverage, error) {
 func (p *Parser) runFuncCover(profile string) ([]byte, error) {
 	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
 	cmd := exec.Command(goTool, "tool", "cover", fmt.Sprintf("-func=%v", profile))
-	stderr := bytes.NewBuffer([]byte{})
-	cmd.Stderr = stderr
 	fnProfile, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get function coverage: %w, stderr %v", err, stderr.String())
+		ee := &exec.ExitError{}
+		if errors.As(err, &ee) {
+			return nil, fmt.Errorf("couldn't get function coverage: %w, stderr %v", err, string(ee.Stderr))
+		}
+		return nil, fmt.Errorf("couldn't get function coverage: %w", err)
 	}
 	return fnProfile, nil
 }
 
-func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts ...ParseOpts) (Coverage, error) {
+func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts ...ParseOpt) (Coverage, error) {
 	opts = append(opts, p.opts...)
 
 	var stmtStats StatementStats
@@ -100,11 +117,11 @@ func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts .
 	})
 
 	group.Go(func() error {
-		fn, err := ParseFuncProfileFromReader(funcProfile, opts...)
+		output, err := p.funcParser(funcProfile)
 		if err != nil {
-			return fmt.Errorf("couldn't parse function profile: %w", err)
+			return err
 		}
-		fnStats = fn
+		fnStats = parseFuncProfile(output, opts...)
 		return nil
 	})
 
