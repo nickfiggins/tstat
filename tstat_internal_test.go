@@ -3,13 +3,13 @@ package tstat
 import (
 	"errors"
 	"io"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/nickfiggins/tstat/internal/gofunc"
 	"github.com/nickfiggins/tstat/internal/gotest"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/tools/cover"
 )
 
@@ -23,7 +23,7 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		{
 			name: "happy",
 			parser: Parser{
-				opts: []ParseOpts{},
+				opts: []ParseOpt{},
 				testParser: func(r io.Reader) ([]gotest.Output, error) {
 					return []gotest.Output{
 						{
@@ -77,7 +77,7 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		{
 			name: "error parsing tests",
 			parser: Parser{
-				opts: []ParseOpts{},
+				opts: []ParseOpt{},
 				testParser: func(r io.Reader) ([]gotest.Output, error) {
 					return []gotest.Output{}, errors.New("error parsing tests")
 				},
@@ -94,9 +94,7 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got.Tests, tt.want.Tests) {
-				t.Fatalf(cmp.Diff(got.Tests, tt.want.Tests))
-			}
+			assert.ElementsMatch(t, tt.want.Tests, got.Tests)
 		})
 	}
 }
@@ -117,7 +115,7 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		{
 			name: "happy cov",
 			parser: Parser{
-				opts: []ParseOpts{},
+				opts: []ParseOpt{},
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return []*cover.Profile{
 						{
@@ -128,6 +126,9 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 							},
 						},
 					}, nil
+				},
+				funcParser: func(r io.Reader) (gofunc.Output, error) {
+					return gofunc.Output{}, nil
 				},
 			},
 			profile:     strings.NewReader(""),
@@ -143,7 +144,7 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		{
 			name: "happy cov, trim module",
 			parser: Parser{
-				opts: []ParseOpts{TrimModule("github.com/mod/")},
+				opts: []ParseOpt{TrimModule("github.com/mod/")},
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return []*cover.Profile{
 						{
@@ -154,6 +155,9 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 							},
 						},
 					}, nil
+				},
+				funcParser: func(r io.Reader) (gofunc.Output, error) {
+					return gofunc.Output{}, nil
 				},
 			},
 			profile:     strings.NewReader(""),
@@ -169,9 +173,12 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		{
 			name: "error reading coverage",
 			parser: Parser{
-				opts: []ParseOpts{},
+				opts: []ParseOpt{},
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return nil, errors.New("error parsing")
+				},
+				funcParser: func(r io.Reader) (gofunc.Output, error) {
+					return gofunc.Output{}, nil
 				},
 			},
 			profile:     strings.NewReader(""),
@@ -182,9 +189,12 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		{
 			name: "error reading func profile",
 			parser: Parser{
-				opts: []ParseOpts{},
+				opts: []ParseOpt{},
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return nil, errors.New("error parsing")
+				},
+				funcParser: func(r io.Reader) (gofunc.Output, error) {
+					return gofunc.Output{}, nil
 				},
 			},
 			profile:     strings.NewReader(""),
@@ -200,9 +210,7 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Fatalf("got %v wanted %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

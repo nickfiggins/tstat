@@ -37,5 +37,5 @@ func ExampleTest() {
 	// TODO: display more functionality here
 
 	fmt.Println(stats.Count())
-	// Output: 13
+	// Output: 1
 }

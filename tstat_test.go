@@ -56,6 +56,7 @@ func Test_CoverageStatsFromReaders(t *testing.T) {
 	}{
 		{name: "happy", covFile: "prog/cover.out", funcFile: "prog/func.out", wantPercent: 25},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cp := tstat.NewParser()

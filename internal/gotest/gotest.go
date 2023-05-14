@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"time"
+	"unicode"
 )
 
 type Action int
@@ -51,10 +53,13 @@ func ReadJSON(r io.Reader) ([]Output, error) {
 	var lines []Output
 	for sc.Scan() {
 		var line Output
-		b := sc.Bytes()
-		err := json.Unmarshal(b, &line)
+		s := strings.TrimFunc(sc.Text(), unicode.IsSpace)
+		if len(s) == 0 {
+			continue
+		}
+		err := json.Unmarshal([]byte(s), &line)
 		if err != nil {
-			return nil, fmt.Errorf("couldn't unmarshal json: %w, bytes: %v", err, string(b))
+			return nil, fmt.Errorf("couldn't unmarshal json: %w, bytes: %v", err, s)
 		}
 		lines = append(lines, line)
 	}

@@ -15,10 +15,12 @@ query for information on code coverage or test cases.
 	}
 	fmt.Printf("total coverage: %#v%%\n", stats.Function.CoverPct)
 	fileCov, ok := stats.Function.File("testdata/prog/prog.go")
-	if ok {
-		for _, fn := range fileCov {
-			fmt.Printf("function: %s coverage: %v%%\n", fn.Name, fn.CoverPct)
-		}
+	if !ok {
+		...
+	}
+	
+	for _, fn := range fileCov {
+		fmt.Printf("function: %s coverage: %v%%\n", fn.Name, fn.CoverPct)
 	}
 	// Output:
 	// total coverage: 25%
@@ -39,6 +41,6 @@ query for information on code coverage or test cases.
 	fmt.Println(stats.Count())
 	// Output: 13
 
-   fmt.Printf("%+v\n", stats.Tests[0])
-   // Output: &{Subtests:[] Action:fail Name:TestHandleQuestion_Error SubName:TestHandleQuestion_Error Package:github.com/nickfiggins/gotestsimulate/gogeo}
+    fmt.Printf("%+v\n", stats.Tests[0])
+    // Output: &{Subtests:[] Action:fail Name:TestHandleQuestion_Error SubName:TestHandleQuestion_Error Package:github.com/nickfiggins/  gotestsimulate/gogeo}
 ```
