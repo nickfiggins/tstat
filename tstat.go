@@ -18,15 +18,20 @@ import (
 )
 
 type Parser struct {
-	opts        []ParseOpt
-	testParser  func(io.Reader) ([]gotest.Output, error)
+	opts        Options
+	testParser  func(io.Reader) ([]gotest.Event, error)
 	coverParser func(io.Reader) ([]*cover.Profile, error)
 	funcParser  func(io.Reader) (gofunc.Output, error)
 }
 
 func NewParser(opts ...ParseOpt) *Parser {
+	var options Options
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	return &Parser{
-		opts:        opts,
+		opts:        options,
 		testParser:  gotest.ReadJSON,
 		coverParser: cover.ParseProfilesFromReader,
 		funcParser:  gofunc.Read,
@@ -66,12 +71,13 @@ func (p *Parser) CoverageStats(profile string) (Coverage, error) {
 	if err != nil {
 		return Coverage{}, fmt.Errorf("couldn't open cover profile: %w", err)
 	}
+
 	profiles, err := p.coverParser(pf)
 	if err != nil {
 		return Coverage{}, err
 	}
 
-	fnOut, err := p.runFuncCover(profile)
+	fnOut, err := runFuncCover(profile)
 	if err != nil {
 		return Coverage{}, err
 	}
@@ -81,38 +87,27 @@ func (p *Parser) CoverageStats(profile string) (Coverage, error) {
 		return Coverage{}, err
 	}
 
-	covStats := parseProfiles(profiles, p.opts...)
-	fnStats := parseFuncProfile(output, p.opts...)
-
-	return Coverage{Statement: &covStats, Function: &fnStats}, nil
-}
-
-func (p *Parser) runFuncCover(profile string) ([]byte, error) {
-	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
-	cmd := exec.Command(goTool, "tool", "cover", fmt.Sprintf("-func=%v", profile))
-	fnProfile, err := cmd.Output()
-	if err != nil {
-		ee := &exec.ExitError{}
-		if errors.As(err, &ee) {
-			return nil, fmt.Errorf("couldn't get function coverage: %w, stderr %v", err, string(ee.Stderr))
+	cov := Coverage{Statement: parseProfiles(profiles, p.opts), Function: parseFuncProfile(output, p.opts)}
+	if p.opts.out != nil {
+		err = cov.writeTo(p.opts.out)
+		if err != nil {
+			return Coverage{}, err
 		}
-		return nil, fmt.Errorf("couldn't get function coverage: %w", err)
 	}
-	return fnProfile, nil
+
+	return cov, nil
 }
 
-func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts ...ParseOpt) (Coverage, error) {
-	opts = append(opts, p.opts...)
-
-	var stmtStats StatementStats
-	var fnStats FunctionStats
+func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader) (Coverage, error) {
+	var stmtStats *StatementStats
+	var fnStats *FunctionStats
 	group := errgroup.Group{}
 	group.Go(func() error {
 		profiles, err := p.coverParser(profile)
 		if err != nil {
 			return fmt.Errorf("couldn't parse coverage from reader: %w", err)
 		}
-		stmtStats = parseProfiles(profiles, opts...)
+		stmtStats = parseProfiles(profiles, p.opts)
 		return nil
 	})
 
@@ -121,7 +116,7 @@ func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts .
 		if err != nil {
 			return err
 		}
-		fnStats = parseFuncProfile(output, opts...)
+		fnStats = parseFuncProfile(output, p.opts)
 		return nil
 	})
 
@@ -130,7 +125,15 @@ func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader, opts .
 		return Coverage{}, err
 	}
 
-	return Coverage{Function: &fnStats, Statement: &stmtStats}, nil
+	cov := Coverage{Function: fnStats, Statement: stmtStats}
+	if p.opts.out != nil {
+		err = cov.writeTo(p.opts.out)
+		if err != nil {
+			return Coverage{}, err
+		}
+	}
+
+	return cov, nil
 }
 
 func (p *Parser) TestRunFromReader(jsonOutput io.Reader) (TestRun, error) {
@@ -139,7 +142,7 @@ func (p *Parser) TestRunFromReader(jsonOutput io.Reader) (TestRun, error) {
 		return TestRun{}, err
 	}
 
-	return parseTestOutput(out)
+	return parseTestOutputs(out)
 }
 
 func (p *Parser) TestRun(outputFile string) (TestRun, error) {
@@ -153,5 +156,23 @@ func (p *Parser) TestRun(outputFile string) (TestRun, error) {
 		return TestRun{}, err
 	}
 
-	return parseTestOutput(out)
+	return parseTestOutputs(out)
+}
+
+func runFuncCover(profile string) ([]byte, error) {
+	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
+	cmd := exec.Command(goTool, "tool", "cover", fmt.Sprintf("-func=%v", profile))
+	fnProfile, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't get function coverage: %w", handleExecError(err))
+	}
+	return fnProfile, nil
+}
+
+func handleExecError(err error) error {
+	ee := &exec.ExitError{}
+	if errors.As(err, &ee) && len(ee.Stderr) > 0 {
+		return fmt.Errorf("%w, stderr %v", err, string(ee.Stderr))
+	}
+	return err
 }

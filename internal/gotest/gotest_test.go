@@ -21,7 +21,7 @@ func TestReadJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		have    io.Reader
-		want    []Output
+		want    []Event
 		wantErr bool
 	}{
 		{
@@ -30,7 +30,7 @@ func TestReadJSON(t *testing.T) {
 				{"Time":"2023-05-13T21:30:15.409912-04:00","Action":"start","Package":"github.com/nickfiggins/tstat/testdata/prog"}
 				{"Time":"2023-05-13T21:30:15.59089-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/testdata/prog","Elapsed":0.181}
 				`),
-			want: []Output{
+			want: []Event{
 				{
 					Time:    format(t, "2023-05-13T21:30:15.409912-04:00"),
 					Action:  "start",
@@ -40,6 +40,7 @@ func TestReadJSON(t *testing.T) {
 					Time:    format(t, "2023-05-13T21:30:15.59089-04:00"),
 					Action:  "pass",
 					Package: "github.com/nickfiggins/tstat/testdata/prog",
+					Elapsed: 0.181,
 				},
 			},
 			wantErr: false,
@@ -52,7 +53,7 @@ func TestReadJSON(t *testing.T) {
 				{"Time":"2023-05-13T21:30:15.587549-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/testdata/prog","Test":"TestAdd","Output":"--- PASS: TestAdd (0.00s)\n"}
 				{"Time":"2023-05-13T21:30:15.587555-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/testdata/prog","Test":"TestAdd","Elapsed":0}
 				`),
-			want: []Output{
+			want: []Event{
 				{
 					Time:    format(t, "2023-05-13T21:30:15.587441-04:00"),
 					Action:  "run",
@@ -95,6 +96,24 @@ func TestReadJSON(t *testing.T) {
 	}
 }
 
+func Test_ToAction(t *testing.T) {
+	tests := []struct {
+		have string
+		want Action
+	}{
+		{"PASS", Pass}, {"FAIL", Fail}, {"fAiL", Fail},
+		{"output", Out}, {"skip", Skip}, {"start", Start},
+		{"dfioroiriooi", Undefined}, {"undefined", Undefined},
+	}
+	for _, tt := range tests {
+		t.Run(tt.have, func(t *testing.T) {
+			if got := ToAction(tt.have); got != tt.want {
+				t.Errorf("ToAction = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAction_String(t *testing.T) {
 	tests := []struct {
 		have Action
@@ -105,12 +124,33 @@ func TestAction_String(t *testing.T) {
 		{Out, "output"},
 		{Skip, "skip"},
 		{Start, "start"},
-		{Action(-1), "invalid status"},
+		{Action(-1), "undefined"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.want, func(t *testing.T) {
 			if got := tt.have.String(); got != tt.want {
 				t.Errorf("Action.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAction_IsFinal(t *testing.T) {
+	tests := []struct {
+		have Action
+		want bool
+	}{
+		{Pass, true},
+		{Fail, true},
+		{Out, false},
+		{Skip, true},
+		{Start, false},
+		{Action(-1), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.have.String(), func(t *testing.T) {
+			if got := tt.have.IsFinal(); got != tt.want {
+				t.Errorf("Action.IsFinal() = %v, want %v", got, tt.want)
 			}
 		})
 	}

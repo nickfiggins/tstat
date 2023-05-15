@@ -7,7 +7,7 @@ import (
 	"github.com/nickfiggins/tstat"
 )
 
-func ExampleCover() {
+func ExampleParser_CoverageStats() {
 	parser := tstat.NewParser(tstat.TrimModule("github.com/nickfiggins/tstat/"))
 
 	stats, err := parser.CoverageStats("testdata/prog/cover.out")
@@ -27,7 +27,7 @@ func ExampleCover() {
 	// function: isOdd coverage: 0%
 }
 
-func ExampleTest() {
+func ExampleParser_TestRun() {
 	parser := tstat.NewParser()
 
 	stats, err := parser.TestRun("testdata/prog/test.json")

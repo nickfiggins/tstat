@@ -1,6 +1,9 @@
 package tstat
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"sort"
 
 	"github.com/nickfiggins/tstat/internal/gofunc"
@@ -8,12 +11,21 @@ import (
 )
 
 type Coverage struct {
-	Function  *FunctionStats
-	Statement *StatementStats
+	Function  *FunctionStats  `json:"function,omitempty"`
+	Statement *StatementStats `json:"statement,omitempty"`
+}
+
+func (c *Coverage) writeTo(w io.Writer) error {
+	b, err := json.Marshal(c) // TODO: write to the writer in a better format
+	if err != nil {
+		return fmt.Errorf("couldn't marshal json: %w", err)
+	}
+	_, err = w.Write(b)
+	return err
 }
 
 type StatementStats struct {
-	CoverPct float64
+	CoverPct float64 `json:"coverPct,omitempty"`
 	fileCov  map[string]File
 }
 
@@ -27,24 +39,20 @@ func (st *StatementStats) File(f string) (File, bool) {
 	v, ok := st.fileCov[f]
 	return v, ok
 }
-func parseProfiles(profiles []*cover.Profile, opts ...ParseOpt) StatementStats {
-	var options Options
-	for _, opt := range opts {
-		opt(&options)
-	}
+func parseProfiles(profiles []*cover.Profile, opts Options) *StatementStats {
 	cov := map[string]File{}
 	total := 0
 	covered := 0
 	for _, prof := range profiles {
 		fileCov := parseProfile(prof)
-		file := options.fileName(prof.FileName)
+		file := opts.fileName(prof.FileName)
 		cov[file] = fileCov
 		total += fileCov.Stmts
 		covered += fileCov.CoveredStmts
 		fileCov.CoverPct = percent(fileCov.CoveredStmts, fileCov.Stmts)
 	}
 
-	return StatementStats{fileCov: cov, CoverPct: percent(covered, total)}
+	return &StatementStats{fileCov: cov, CoverPct: percent(covered, total)}
 }
 
 func percent(covered, total int) float64 {
@@ -81,7 +89,7 @@ type Function struct {
 type fileFuncCov map[string]Function
 
 type FunctionStats struct {
-	CoverPct float64
+	CoverPct float64 `json:"coverPct,omitempty"`
 	fileCov  map[string]fileFuncCov
 }
 
@@ -128,18 +136,14 @@ func (st *FunctionStats) File(f string) ([]Function, bool) {
 	return vals, true
 }
 
-func parseFuncProfile(output gofunc.Output, opts ...ParseOpt) FunctionStats {
-	var options Options
-	for _, opt := range opts {
-		opt(&options)
-	}
+func parseFuncProfile(output gofunc.Output, opts Options) *FunctionStats {
 	funcStats := FunctionStats{fileCov: map[string]fileFuncCov{}}
 	for _, fn := range output.Funcs {
-		file := options.fileName(fn.File)
+		file := opts.fileName(fn.File)
 		funcStats.addFunc(Function{Name: fn.Function, File: file, CoverPct: fn.Percent, line: fn.Line})
 	}
 
 	funcStats.CoverPct = output.Percent
 
-	return funcStats
+	return &funcStats
 }
