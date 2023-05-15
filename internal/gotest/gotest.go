@@ -10,49 +10,68 @@ import (
 	"unicode"
 )
 
-type Action int
-
-const (
-	Start Action = iota
-	Pass
-	Fail
-	Skip
-	Out
-)
-
-func (a Action) String() string {
-	switch a {
-	case Pass:
-		return "pass"
-	case Fail:
-		return "fail"
-	case Skip:
-		return "skip"
-	case Start:
-		return "start"
-	case Out:
-		return "output"
-	}
-	return "invalid status"
-}
-
-func IsFinal(status string) bool {
-	return status == Pass.String() || status == Fail.String() || status == Skip.String()
-}
-
-type Output struct {
+type Event struct {
 	Time    time.Time `json:"Time"`
 	Action  string    `json:"Action"`
 	Output  string    `json:"Output"`
 	Test    string    `json:"Test"`
 	Package string    `json:"Package"`
+	Elapsed float64   `json:"Elapsed"` // Elapsed is the number of seconds that have passed.
 }
 
-func ReadJSON(r io.Reader) ([]Output, error) {
+// see https://pkg.go.dev/cmd/test2json#hdr-Output_Format
+type Action int
+
+const (
+	Start     Action = 0
+	Pass      Action = 1
+	Fail      Action = 2
+	Skip      Action = 3
+	Out       Action = 4
+	Run       Action = 5
+	Undefined Action = -1
+)
+
+func ToAction(s string) Action {
+	var toAction = map[string]Action{
+		"start": Start, "pass": Pass, "fail": Fail, "skip": Skip,
+		"output": Out, "run": Run, "undefined": Undefined,
+	}
+	a, ok := toAction[strings.ToLower(s)]
+	if !ok {
+		return Undefined
+	}
+
+	return a
+}
+
+func (a Action) String() string {
+	var toStr = map[Action]string{
+		Start: "start", Pass: "pass", Fail: "fail", Skip: "skip",
+		Out: "output", Run: "run", Undefined: "undefined",
+	}
+	s, ok := toStr[a]
+	if !ok {
+		return toStr[Undefined]
+	}
+	return s
+}
+
+func (a Action) IsFinal() bool {
+	switch a {
+	case Pass, Fail, Skip:
+		return true
+	case Start, Run, Out, Undefined:
+	default:
+	}
+	return false
+}
+
+func ReadJSON(r io.Reader) ([]Event, error) {
 	sc := bufio.NewScanner(r)
-	var lines []Output
+	var lines []Event
 	for sc.Scan() {
-		var line Output
+		var line Event
 		s := strings.TrimFunc(sc.Text(), unicode.IsSpace)
 		if len(s) == 0 {
 			continue

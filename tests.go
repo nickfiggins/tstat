@@ -7,30 +7,13 @@ import (
 	"time"
 
 	"github.com/nickfiggins/tstat/internal/gotest"
+	"golang.org/x/exp/maps"
 )
 
-type TestRun struct {
-	start, end time.Time
-	Tests      []*Test
-	Passed     bool
-	cmdOut     string
-}
-
-func (ts *TestRun) Duration() time.Duration {
-	return ts.end.Sub(ts.start)
-}
-
-func (ts *TestRun) Count() int {
-	count := 0
-	for _, test := range ts.Tests {
-		count += test.count()
-	}
-	return count
-}
-
 type Test struct {
-	Subtests []Test
+	Subtests []*Test
 	Action   string `json:"Action"`
+	actions  []gotest.Action
 	Name     string
 	SubName  string
 	Package  string `json:"Package"`
@@ -45,54 +28,123 @@ func (t *Test) count() int {
 }
 
 func (t *Test) addSubtests(sub Test) {
-	subs := strings.Split(sub.Name, "/")
-	nestedCount := len(subs)
-	if nestedCount == 2 {
-		t.Subtests = append(t.Subtests, sub)
+	trimmed := strings.TrimPrefix(sub.Name, t.Name+"/")
+	remainingSubs := strings.Split(trimmed, "/")
+	if len(remainingSubs) == 1 {
+		t.Subtests = append(t.Subtests, &sub)
 		return
 	}
 
 	for _, subtest := range t.Subtests {
-		if strings.Contains(sub.Name, subtest.Name) {
+		if isSubOf(subtest, &sub) {
 			subtest.addSubtests(sub)
 		}
 	}
 }
 
-func toTest(to gotest.Output) Test {
-	nameParts := strings.Split(to.Test, "/")
+func isSubOf(super *Test, sub *Test) bool {
+	return strings.HasPrefix(sub.Name+"/", super.Name)
+}
+
+func toTest(to gotest.Event) Test {
+	// add 1 to pull the part after the slash, and conveniently
+	// handle the case of no subtests as well
+	subStart := strings.LastIndex(to.Test, "/") + 1
 	return Test{
-		Subtests: make([]Test, 0),
+		Subtests: make([]*Test, 0),
 		Action:   to.Action,
+		actions:  []gotest.Action{gotest.ToAction(to.Action)},
 		Name:     to.Test,
 		Package:  to.Package,
-		SubName:  nameParts[len(nameParts)-1],
+		SubName:  to.Test[subStart:],
 	}
 }
 
-func parseTestOutput(outputs []gotest.Output) (TestRun, error) {
-	output := byTestName(outputs)
-	start, end := start(output), output[len(output)-1]
-	sort.Sort(byTestName(outputs))
-
-	var tests []Test
+func byPackage(outputs []gotest.Event) map[string][]gotest.Event {
+	pkgs := make(map[string][]gotest.Event)
 	for _, out := range outputs {
-		if out.Test != "" && gotest.IsFinal(out.Action) {
-			tests = append(tests, toTest(out))
+		pkg, ok := pkgs[out.Package]
+		if !ok {
+			pkgs[out.Package] = append(pkgs[out.Package], out)
+			continue
 		}
+		pkg = append(pkg, out)
+		pkgs[out.Package] = pkg
 	}
+
+	return pkgs
+}
+
+func parseTestOutputs(outputs []gotest.Event) (TestRun, error) {
+	pkgTests := byPackage(outputs)
+	suite := TestRun{}
+	for name, tests := range pkgTests {
+		run, err := parsePackageTests(tests)
+		if err != nil {
+			return TestRun{}, err
+		}
+		if suite.start.IsZero() || run.start.Before(suite.start) {
+			suite.start = run.start
+		}
+
+		if suite.end.IsZero() || run.end.After(suite.end) {
+			suite.end = run.end
+		}
+		run.pkgName = name
+		suite.pkgs = append(suite.pkgs, run)
+	}
+	return suite, nil
+}
+
+func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
+	tmap := make(map[string]Test, 0)
+	var start, end time.Time
+	for _, out := range outputs {
+		if isPackageEvent(out) {
+			switch {
+			case isStart(out):
+				start = out.Time
+			case isEnd(out):
+				end = out.Time
+			}
+			continue
+		}
+
+		test, ok := tmap[out.Test]
+		if !ok {
+			t := toTest(out)
+			tmap[out.Test] = t
+			continue
+		}
+
+		test.actions = append(test.actions, gotest.ToAction(out.Action))
+	}
+
+	tests := maps.Values(tmap)
+	sort.Sort(byTestName(tests))
 
 	rootTests, err := nestSubtests(tests)
 	if err != nil {
-		return TestRun{}, err
+		return PackageRun{}, err
 	}
 
-	return TestRun{
-		start: start.Time, end: end.Time,
+	return PackageRun{
+		start: start, end: end,
 		Tests:  rootTests,
-		Passed: len(withStatus(rootTests, gotest.Fail)) == 0,
 		cmdOut: consoleOutputs(outputs),
 	}, nil
+}
+
+func isPackageEvent(out gotest.Event) bool {
+	return out.Test == "" && out.Package != ""
+}
+
+func isEnd(out gotest.Event) bool {
+	return out.Test == "" && out.Elapsed != 0
+}
+
+func isStart(out gotest.Event) bool {
+	return gotest.ToAction(out.Action) == gotest.Start
 }
 
 func nestSubtests(tests []Test) ([]*Test, error) {
@@ -111,26 +163,21 @@ func nestSubtests(tests []Test) ([]*Test, error) {
 		test.addSubtests(to)
 	}
 
-	var testSlice []*Test
-	for _, t := range rootTests {
-		testSlice = append(testSlice, t)
-	}
-
-	return testSlice, nil
+	return maps.Values(rootTests), nil
 }
 
-func withStatus(tests []*Test, s gotest.Action) []*Test {
+func withAction(tests []*Test, action gotest.Action) []*Test {
 	sl := make([]*Test, 0)
-	strStatus := s.String()
+	want := action.String()
 	for _, test := range tests {
-		if test.Action == strStatus {
+		if test.Action == want {
 			sl = append(sl, test)
 		}
 	}
 	return sl
 }
 
-func consoleOutputs(outputs []gotest.Output) string {
+func consoleOutputs(outputs []gotest.Event) string {
 	sb := strings.Builder{}
 	for _, o := range outputs {
 		if o.Action == "output" {
@@ -143,19 +190,10 @@ func consoleOutputs(outputs []gotest.Output) string {
 
 // byTestName sorts tests by their name, which ensures that all parent tests come
 // before the subtests.
-type byTestName []gotest.Output
-
-func start(b []gotest.Output) gotest.Output {
-	for _, out := range b {
-		if out.Action == "start" {
-			return out
-		}
-	}
-	return gotest.Output{}
-}
+type byTestName []Test
 
 func (b byTestName) Len() int      { return len(b) }
 func (b byTestName) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
 func (b byTestName) Less(i, j int) bool {
-	return b[i].Test < b[j].Test
+	return b[i].Name < b[j].Name
 }
