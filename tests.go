@@ -12,19 +12,44 @@ import (
 
 type Test struct {
 	Subtests []*Test
-	Action   string `json:"Action"`
 	actions  []gotest.Action
 	Name     string
 	SubName  string
-	Package  string `json:"Package"`
+	Package  string
 }
 
-func (t *Test) count() int {
+func (t *Test) Test(name string) Test {
+	if name == t.Name {
+		return *t
+	}
+
+	sub, ok := findTest(name, t.Subtests...)
+	if !ok {
+		return Test{}
+	}
+	return *sub
+}
+
+func (t *Test) Passed() bool {
+	for _, act := range t.actions {
+		if act == gotest.Pass {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Test) Count() int {
 	count := 1
 	for _, sub := range t.Subtests {
-		count += sub.count()
+		count += sub.Count()
 	}
 	return count
+}
+
+// does the test name look like a sub test of the current test?
+func (t *Test) looksLikeSub(subName string) bool {
+	return strings.HasPrefix(subName+"/", t.Name)
 }
 
 func (t *Test) addSubtests(sub Test) {
@@ -36,14 +61,10 @@ func (t *Test) addSubtests(sub Test) {
 	}
 
 	for _, subtest := range t.Subtests {
-		if isSubOf(subtest, &sub) {
+		if t.looksLikeSub(subtest.Name) {
 			subtest.addSubtests(sub)
 		}
 	}
-}
-
-func isSubOf(super *Test, sub *Test) bool {
-	return strings.HasPrefix(sub.Name+"/", super.Name)
 }
 
 func toTest(to gotest.Event) Test {
@@ -52,7 +73,6 @@ func toTest(to gotest.Event) Test {
 	subStart := strings.LastIndex(to.Test, "/") + 1
 	return Test{
 		Subtests: make([]*Test, 0),
-		Action:   to.Action,
 		actions:  []gotest.Action{gotest.ToAction(to.Action)},
 		Name:     to.Test,
 		Package:  to.Package,
@@ -168,10 +188,12 @@ func nestSubtests(tests []Test) ([]*Test, error) {
 
 func withAction(tests []*Test, action gotest.Action) []*Test {
 	sl := make([]*Test, 0)
-	want := action.String()
 	for _, test := range tests {
-		if test.Action == want {
-			sl = append(sl, test)
+		for _, act := range test.actions {
+			if act == action {
+				sl = append(sl, test)
+				break
+			}
 		}
 	}
 	return sl

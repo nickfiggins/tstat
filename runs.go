@@ -46,6 +46,27 @@ func (tr *TestRun) Passed() bool {
 	return true
 }
 
+func (pr *PackageRun) Test(name string) Test {
+	t, ok := findTest(name, pr.Tests...)
+	if !ok {
+		return Test{}
+	}
+	return *t
+}
+
+func findTest(name string, tests ...*Test) (*Test, bool) {
+	for _, t := range tests {
+		if strings.EqualFold(t.Name, name) {
+			return t, true
+		}
+
+		if t.looksLikeSub(name) {
+			return findTest(name, t.Subtests...)
+		}
+	}
+	return nil, false
+}
+
 type PackageRun struct {
 	pkgName    string
 	start, end time.Time
@@ -53,19 +74,19 @@ type PackageRun struct {
 	cmdOut     string
 }
 
-func (tr *PackageRun) Duration() time.Duration {
-	return tr.end.Sub(tr.start)
+func (pr *PackageRun) Duration() time.Duration {
+	return pr.end.Sub(pr.start)
 }
 
 // Count returns the total number of tests, including subtests.
-func (tr *PackageRun) Count() int {
+func (pr *PackageRun) Count() int {
 	var count int
-	for _, test := range tr.Tests {
-		count += test.count()
+	for _, test := range pr.Tests {
+		count += test.Count()
 	}
 	return count
 }
 
-func (tr *PackageRun) Passed() bool {
-	return len(withAction(tr.Tests, gotest.Fail)) == 0
+func (pr *PackageRun) Passed() bool {
+	return len(withAction(pr.Tests, gotest.Fail)) == 0
 }

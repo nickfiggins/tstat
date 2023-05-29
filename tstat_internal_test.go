@@ -36,9 +36,9 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 			},
 			want: PackageRun{
 				Tests: []*Test{
-					{Action: "pass", Name: "Test1", SubName: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-					{Action: "pass", Name: "Test2", SubName: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
-						Subtests: []*Test{{Subtests: []*Test{}, Action: "pass", Name: "Test2/sub", SubName: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
+					{Name: "Test1", SubName: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+					{Name: "Test2", SubName: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
+						Subtests: []*Test{{Subtests: []*Test{}, Name: "Test2/sub", SubName: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
 					},
 				},
 			},
@@ -58,11 +58,11 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 			},
 			want: PackageRun{
 				Tests: []*Test{
-					{Action: "pass", Name: "Test1", SubName: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-					{Action: "pass", Name: "Test2", SubName: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
+					{Name: "Test1", SubName: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+					{Name: "Test2", SubName: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
 						Subtests: []*Test{{Subtests: []*Test{
-							{Action: "pass", Name: "Test2/sub/sub2", SubName: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-						}, Action: "pass", Name: "Test2/sub", SubName: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
+							{Name: "Test2/sub/sub2", SubName: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+						}, Name: "Test2/sub", SubName: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
 					},
 				},
 			},

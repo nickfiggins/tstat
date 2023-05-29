@@ -39,6 +39,7 @@ func (st *StatementStats) File(f string) (File, bool) {
 	v, ok := st.fileCov[f]
 	return v, ok
 }
+
 func parseProfiles(profiles []*cover.Profile, opts Options) *StatementStats {
 	cov := map[string]File{}
 	total := 0
