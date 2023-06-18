@@ -29,7 +29,6 @@ const (
 	Skip      Action = 3
 	Out       Action = 4
 	Run       Action = 5
-	End       Action = 6
 	Undefined Action = -1
 )
 

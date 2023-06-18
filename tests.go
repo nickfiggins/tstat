@@ -176,7 +176,7 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 	}, nil
 }
 
-// isPackageEvent returns true if the event is a package event (no test referenced in event)
+// isPackageEvent returns true if the event is a package event (no test referenced in event).
 func isPackageEvent(out gotest.Event) bool {
 	return out.Test == "" && out.Package != ""
 }
