@@ -13,121 +13,89 @@ import (
 
 	"github.com/nickfiggins/tstat/internal/gofunc"
 	"github.com/nickfiggins/tstat/internal/gotest"
-	"golang.org/x/sync/errgroup"
 	"golang.org/x/tools/cover"
 )
 
-type Parser struct {
-	opts        Options
-	testParser  func(io.Reader) ([]gotest.Event, error)
+type CoverageParser struct {
+	TrimModule   string
+	WriteTo      io.Writer
+	FuncProfile  io.Reader
+	CoverProfile io.Reader
+
 	coverParser func(io.Reader) ([]*cover.Profile, error)
 	funcParser  func(io.Reader) (gofunc.Output, error)
 }
 
-func NewParser(opts ...ParseOpt) *Parser {
-	var options Options
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	return &Parser{
-		opts:        options,
-		testParser:  gotest.ReadJSON,
-		coverParser: cover.ParseProfilesFromReader,
-		funcParser:  gofunc.Read,
-	}
-}
-
-type Options struct {
-	trimModule string
-	out        io.Writer
-}
-
-type ParseOpt func(*Options)
-
-// TrimModule will trim the given prefix (likely the name of a package or module)
-// from all object names returned.
-func TrimModule(name string) ParseOpt {
-	return func(o *Options) {
-		o.trimModule = name
-	}
-}
-
-func WriteTo(w io.Writer) ParseOpt {
-	return func(o *Options) {
-		o.out = w
-	}
-}
-
-func (o Options) fileName(full string) string {
-	if o.trimModule != "" {
-		return strings.TrimPrefix(full, o.trimModule)
-	}
-	return full
-}
-
-func (p *Parser) CoverageStats(profile string) (Coverage, error) {
-	pf, err := os.Open(profile)
-	if err != nil {
-		return Coverage{}, fmt.Errorf("couldn't open cover profile: %w", err)
-	}
-
-	profiles, err := p.coverParser(pf)
-	if err != nil {
-		return Coverage{}, err
-	}
-
-	fnOut, err := runFuncCover(profile)
-	if err != nil {
-		return Coverage{}, err
-	}
-
-	output, err := p.funcParser(bytes.NewBuffer(fnOut))
-	if err != nil {
-		return Coverage{}, err
-	}
-
-	cov := Coverage{Statement: parseProfiles(profiles, p.opts), Function: parseFuncProfile(output, p.opts)}
-	if p.opts.out != nil {
-		err = cov.writeTo(p.opts.out)
-		if err != nil {
-			return Coverage{}, err
-		}
-	}
-
-	return cov, nil
-}
-
-func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader) (Coverage, error) {
-	var stmtStats *StatementStats
-	var fnStats *FunctionStats
-	group := errgroup.Group{}
-	group.Go(func() error {
-		profiles, err := p.coverParser(profile)
-		if err != nil {
-			return fmt.Errorf("couldn't parse coverage from reader: %w", err)
-		}
-		stmtStats = parseProfiles(profiles, p.opts)
+func WithRootModule(module string) CoverOpt {
+	return func(cp *CoverageParser) error {
+		cp.TrimModule = filepath.Clean(module)
 		return nil
-	})
+	}
+}
 
-	group.Go(func() error {
-		output, err := p.funcParser(funcProfile)
+func WithFiles(cover, fn io.Reader) CoverOpt {
+	return func(cp *CoverageParser) error {
+		cp.CoverProfile = cover
+		cp.FuncProfile = fn
+		return nil
+	}
+}
+
+func WithCoverProfile(cover string) CoverOpt {
+	return func(cp *CoverageParser) error {
+		f, err := os.Open(cover)
 		if err != nil {
 			return err
 		}
-		fnStats = parseFuncProfile(output, p.opts)
+		cp.CoverProfile = f
+		fnOut, err := runFuncCover(cover)
+		if err != nil {
+			return err
+		}
+		cp.FuncProfile = bytes.NewBuffer(fnOut)
 		return nil
-	})
+	}
+}
 
-	err := group.Wait()
+func Cover(opts ...CoverOpt) (*CoverageParser, error) {
+	parser := &CoverageParser{
+		WriteTo:     nil,
+		coverParser: cover.ParseProfilesFromReader,
+		funcParser:  gofunc.Read,
+	}
+
+	for _, opt := range opts {
+		if err := opt(parser); err != nil {
+			return nil, err
+		}
+	}
+
+	return parser, nil
+}
+
+type CoverOpt func(*CoverageParser) error
+
+func (p *CoverageParser) fileName(full string) string {
+	if p.TrimModule == "" {
+		return full
+	}
+	return strings.TrimPrefix(full, p.TrimModule+"/")
+}
+
+func (p *CoverageParser) Stats() (Coverage, error) {
+	profiles, err := p.coverParser(p.CoverProfile)
 	if err != nil {
 		return Coverage{}, err
 	}
 
-	cov := Coverage{Function: fnStats, Statement: stmtStats}
-	if p.opts.out != nil {
-		err = cov.writeTo(p.opts.out)
+	output, err := p.funcParser(p.FuncProfile)
+	if err != nil {
+		return Coverage{}, err
+	}
+
+	cov := Coverage{Statement: parseProfiles(profiles, p.fileName), Function: parseFuncProfile(output, p.fileName)}
+	if p.WriteTo != nil {
+		err = cov.writeTo(p.WriteTo)
 		if err != nil {
 			return Coverage{}, err
 		}
@@ -136,22 +104,31 @@ func (p *Parser) CoverageStatsFromReaders(profile, funcProfile io.Reader) (Cover
 	return cov, nil
 }
 
-func (p *Parser) TestRunFromReader(jsonOutput io.Reader) (TestRun, error) {
-	out, err := p.testParser(jsonOutput)
-	if err != nil {
-		return TestRun{}, err
-	}
-
-	return parseTestOutputs(out)
+type TestParser struct {
+	jsonOut    io.Reader
+	testParser func(io.Reader) ([]gotest.Event, error)
 }
 
-func (p *Parser) TestRun(outputFile string) (TestRun, error) {
-	of, err := os.Open(outputFile)
-	if err != nil {
-		return TestRun{}, fmt.Errorf("couldn't open test output file: %w", err)
+func Tests(outJSON io.Reader) *TestParser {
+	return &TestParser{
+		jsonOut:    outJSON,
+		testParser: gotest.ReadJSON,
 	}
-	defer of.Close()
-	out, err := p.testParser(of)
+}
+
+func TestsFromFile(outFile string) (*TestParser, error) {
+	f, err := os.Open(outFile)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't open file: %w", err)
+	}
+	return &TestParser{
+		jsonOut:    f,
+		testParser: gotest.ReadJSON,
+	}, nil
+}
+
+func (p *TestParser) Stats() (TestRun, error) {
+	out, err := p.testParser(p.jsonOut)
 	if err != nil {
 		return TestRun{}, err
 	}
@@ -170,7 +147,7 @@ func runFuncCover(profile string) ([]byte, error) {
 }
 
 func handleExecError(err error) error {
-	ee := &exec.ExitError{}
+	var ee *exec.ExitError
 	if errors.As(err, &ee) && len(ee.Stderr) > 0 {
 		return fmt.Errorf("%w, stderr %v", err, string(ee.Stderr))
 	}

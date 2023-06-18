@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -16,16 +17,24 @@ import (
 )
 
 func Test_Internal_TestRunFromReader(t *testing.T) {
+	fileName := t.TempDir() + "/" + "test.json"
+	if _, err := os.Create(fileName); err != nil {
+		t.Fatal(err)
+	}
+	testFile, err := os.Open(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
 		name    string
-		parser  Parser
+		parser  TestParser
 		want    PackageRun
 		wantErr bool
 	}{
 		{
 			name: "happy",
-			parser: Parser{
-				opts: Options{},
+			parser: TestParser{
+				jsonOut: testFile,
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{
 						{Time: time.Now(), Action: "pass", Test: "Test1", Package: "pkg"},
@@ -45,8 +54,8 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		},
 		{
 			name: "happy, nested subtests",
-			parser: Parser{
-				opts: Options{},
+			parser: TestParser{
+				jsonOut: testFile,
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{
 						{Time: time.Now(), Action: "pass", Test: "Test1", Package: "pkg"},
@@ -69,8 +78,8 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		},
 		{
 			name: "error parsing tests",
-			parser: Parser{
-				opts: Options{},
+			parser: TestParser{
+				jsonOut: testFile,
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{}, errors.New("error parsing tests")
 				},
@@ -82,7 +91,7 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cp := tt.parser
-			got, err := cp.TestRunFromReader(strings.NewReader(""))
+			got, err := cp.Stats()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -95,17 +104,24 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 }
 
 func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
+	fileName := t.TempDir() + "/" + "test.json"
+	if _, err := os.Create(fileName); err != nil {
+		t.Fatal(err)
+	}
+	testFile, err := os.Open(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
-		name                 string
-		profile, funcProfile io.Reader
-		parser               Parser
-		want                 Coverage
-		wantErr              bool
+		name        string
+		funcProfile io.Reader
+		parser      CoverageParser
+		want        Coverage
+		wantErr     bool
 	}{
 		{
 			name: "happy cov",
-			parser: Parser{
-				opts: Options{},
+			parser: CoverageParser{
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return []*cover.Profile{
 						{
@@ -121,10 +137,9 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 					return gofunc.Output{}, nil
 				},
 			},
-			profile:     strings.NewReader(""),
 			funcProfile: strings.NewReader(""),
 			want: Coverage{
-				Function: &FunctionStats{fileCov: map[string]fileFuncCov{}},
+				Function: &FunctionStats{pkgCov: map[string]pkgFuncCov{}},
 				Statement: &StatementStats{
 					CoverPct: 20,
 					fileCov:  map[string]File{"prog.go": {CoverPct: 0.2, Stmts: 5, CoveredStmts: 1}},
@@ -133,8 +148,8 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		},
 		{
 			name: "happy cov, trim module",
-			parser: Parser{
-				opts: Options{trimModule: "github.com/mod/"},
+			parser: CoverageParser{
+				TrimModule: "github.com/mod",
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return []*cover.Profile{
 						{
@@ -150,10 +165,9 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 					return gofunc.Output{}, nil
 				},
 			},
-			profile:     strings.NewReader(""),
 			funcProfile: strings.NewReader(""),
 			want: Coverage{
-				Function: &FunctionStats{fileCov: map[string]fileFuncCov{}},
+				Function: &FunctionStats{pkgCov: map[string]pkgFuncCov{}},
 				Statement: &StatementStats{
 					CoverPct: 20,
 					fileCov:  map[string]File{"prog.go": {CoverPct: 0.2, Stmts: 5, CoveredStmts: 1}},
@@ -162,8 +176,7 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		},
 		{
 			name: "error reading coverage",
-			parser: Parser{
-				opts: Options{},
+			parser: CoverageParser{
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return nil, errors.New("error parsing")
 				},
@@ -171,15 +184,13 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 					return gofunc.Output{}, nil
 				},
 			},
-			profile:     strings.NewReader(""),
 			funcProfile: strings.NewReader(""),
 			want:        Coverage{},
 			wantErr:     true,
 		},
 		{
 			name: "error reading func profile",
-			parser: Parser{
-				opts: Options{},
+			parser: CoverageParser{
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return nil, errors.New("error parsing")
 				},
@@ -187,7 +198,6 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 					return gofunc.Output{}, nil
 				},
 			},
-			profile:     strings.NewReader(""),
 			funcProfile: &errReader{},
 			want:        Coverage{},
 			wantErr:     true,
@@ -195,7 +205,9 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.parser.CoverageStatsFromReaders(tt.profile, tt.funcProfile)
+			tt.parser.FuncProfile = tt.funcProfile
+			tt.parser.CoverProfile = testFile
+			got, err := tt.parser.Stats()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -206,9 +218,18 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 }
 
 func Test_Internal_CoverageStatsFromReaders_WriteTo(t *testing.T) {
+	fileName := t.TempDir() + "/" + "test.json"
+	if _, err := os.Create(fileName); err != nil {
+		t.Fatal(err)
+	}
+	testFile, err := os.Open(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
 	buf := bytes.NewBufferString("")
-	parser := Parser{
-		opts: Options{trimModule: "github.com/mod/", out: buf},
+	parser := CoverageParser{
+		CoverProfile: testFile,
+		TrimModule:   "github.com/mod", WriteTo: buf,
 		coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 			return []*cover.Profile{
 				{
@@ -226,14 +247,14 @@ func Test_Internal_CoverageStatsFromReaders_WriteTo(t *testing.T) {
 	}
 
 	want := Coverage{
-		Function: &FunctionStats{fileCov: map[string]fileFuncCov{}},
+		Function: &FunctionStats{pkgCov: map[string]pkgFuncCov{}},
 		Statement: &StatementStats{
 			CoverPct: 20,
 			fileCov:  map[string]File{"prog.go": {CoverPct: 0.2, Stmts: 5, CoveredStmts: 1}},
 		},
 	}
 
-	got, err := parser.CoverageStatsFromReaders(strings.NewReader(""), strings.NewReader(""))
+	got, err := parser.Stats()
 	assert.NoError(t, err)
 	assert.Equal(t, want, got)
 

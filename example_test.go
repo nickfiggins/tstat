@@ -7,10 +7,12 @@ import (
 	"github.com/nickfiggins/tstat"
 )
 
-func ExampleParser_CoverageStats() {
-	parser := tstat.NewParser(tstat.TrimModule("github.com/nickfiggins/tstat/"))
-
-	stats, err := parser.CoverageStats("testdata/prog/cover.out")
+func ExampleCoverageParser_Stats() {
+	parser, err := tstat.Cover(tstat.WithCoverProfile("testdata/prog/cover.out"), tstat.WithRootModule("github.com/nickfiggins/tstat"))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	stats, err := parser.Stats()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -28,9 +30,9 @@ func ExampleParser_CoverageStats() {
 }
 
 func ExampleParser_TestRun() {
-	parser := tstat.NewParser()
+	parser, _ := tstat.TestsFromFile("testdata/prog/test.json")
 
-	stats, err := parser.TestRun("testdata/prog/test.json")
+	stats, err := parser.Stats()
 	if err != nil {
 		log.Fatalln(err)
 	}

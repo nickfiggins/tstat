@@ -3,6 +3,7 @@ package tstat
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -116,9 +117,24 @@ func parseTestOutputs(outputs []gotest.Event) (TestRun, error) {
 	return suite, nil
 }
 
+func getSeed(out gotest.Event) (int64, bool) {
+	flag := "-test.shuffle"
+	idx := strings.Index(out.Output, flag)
+	if idx == -1 {
+		return 0, false
+	}
+	num := strings.Trim(out.Output[idx+len(flag):], " \n")
+	n, err := strconv.ParseInt(num, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}
+
 func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 	tmap := make(map[string]Test, 0)
 	var start, end time.Time
+	var seed int64
 	for _, out := range outputs {
 		if isPackageEvent(out) {
 			switch {
@@ -126,6 +142,10 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 				start = out.Time
 			case isEnd(out):
 				end = out.Time
+			case gotest.ToAction(out.Action) == gotest.Out:
+				if s, ok := getSeed(out); ok {
+					seed = s
+				}
 			}
 			continue
 		}
@@ -138,6 +158,7 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 		}
 
 		test.actions = append(test.actions, gotest.ToAction(out.Action))
+		tmap[out.Test] = test
 	}
 
 	tests := maps.Values(tmap)
@@ -150,11 +171,12 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 
 	return PackageRun{
 		start: start, end: end,
-		Tests:  rootTests,
-		cmdOut: consoleOutputs(outputs),
+		Tests: rootTests,
+		Seed:  seed,
 	}, nil
 }
 
+// isPackageEvent returns true if the event is a package event (no test referenced in event)
 func isPackageEvent(out gotest.Event) bool {
 	return out.Test == "" && out.Package != ""
 }
@@ -197,17 +219,6 @@ func withAction(tests []*Test, action gotest.Action) []*Test {
 		}
 	}
 	return sl
-}
-
-func consoleOutputs(outputs []gotest.Event) string {
-	sb := strings.Builder{}
-	for _, o := range outputs {
-		if o.Action == "output" {
-			sb.WriteString(o.Output)
-		}
-	}
-
-	return sb.String()
 }
 
 // byTestName sorts tests by their name, which ensures that all parent tests come

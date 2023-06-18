@@ -46,12 +46,12 @@ func (tr *TestRun) Passed() bool {
 	return true
 }
 
-func (pr *PackageRun) Test(name string) Test {
+func (pr *PackageRun) Test(name string) *Test {
 	t, ok := findTest(name, pr.Tests...)
 	if !ok {
-		return Test{}
+		return &Test{}
 	}
-	return *t
+	return t
 }
 
 func findTest(name string, tests ...*Test) (*Test, bool) {
@@ -71,7 +71,7 @@ type PackageRun struct {
 	pkgName    string
 	start, end time.Time
 	Tests      []*Test
-	cmdOut     string
+	Seed       int64
 }
 
 func (pr *PackageRun) Duration() time.Duration {

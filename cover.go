@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/nickfiggins/tstat/internal/gofunc"
 	"golang.org/x/tools/cover"
@@ -40,13 +41,13 @@ func (st *StatementStats) File(f string) (File, bool) {
 	return v, ok
 }
 
-func parseProfiles(profiles []*cover.Profile, opts Options) *StatementStats {
+func parseProfiles(profiles []*cover.Profile, fileName func(string) string) *StatementStats {
 	cov := map[string]File{}
 	total := 0
 	covered := 0
 	for _, prof := range profiles {
 		fileCov := parseProfile(prof)
-		file := opts.fileName(prof.FileName)
+		file := fileName(prof.FileName)
 		cov[file] = fileCov
 		total += fileCov.Stmts
 		covered += fileCov.CoveredStmts
@@ -58,14 +59,13 @@ func parseProfiles(profiles []*cover.Profile, opts Options) *StatementStats {
 
 func percent(covered, total int) float64 {
 	if total == 0 {
-		return -1
+		return 0
 	}
 	return 100 * float64(covered) / float64(total)
 }
 
 func parseProfile(cp *cover.Profile) File {
-	stmts := 0
-	coveredStmts := 0
+	stmts, coveredStmts := 0, 0
 	for _, bk := range cp.Blocks {
 		stmts += bk.NumStmt
 		if bk.Count > 0 {
@@ -87,40 +87,66 @@ type Function struct {
 	line     int
 }
 
-type fileFuncCov map[string]Function
+type pkgFuncCov map[string]Function
 
 type FunctionStats struct {
 	CoverPct float64 `json:"coverPct,omitempty"`
-	fileCov  map[string]fileFuncCov
+	pkgCov   map[string]pkgFuncCov
 }
 
 func (st *FunctionStats) addFunc(fn Function) {
-	file, ok := st.fileCov[fn.File]
+	file, ok := st.pkgCov[fn.File]
 	if ok {
 		file[fn.Name] = fn
 		return
 	}
-	st.fileCov[fn.File] = fileFuncCov{
-		fn.Name: fn,
+
+	if i := strings.LastIndex(fn.File, "/"); i != -1 {
+		pkg := fn.File[:i]
+		if pc, pkgOK := st.pkgCov[pkg]; pkgOK {
+			pc[fn.Name] = fn
+			return
+		}
+
+		st.pkgCov[pkg] = pkgFuncCov{
+			fn.Name: fn,
+		}
 	}
 }
 
-func (st *FunctionStats) Func(file, fn string) float64 {
-	v, ok := st.fileCov[file]
+func (st *FunctionStats) Func(pkg, fn string) (float64, bool) {
+	v, ok := st.pkgCov[pkg]
 	if !ok {
-		return -1
+		return 0, false
 	}
 
 	cov, ok := v[fn]
 	if !ok {
-		return -1
+		return 0, false
 	}
 
-	return cov.CoverPct
+	return cov.CoverPct, true
 }
 
 func (st *FunctionStats) File(f string) ([]Function, bool) {
-	fileFuncs, ok := st.fileCov[f]
+	var fns []Function
+	for _, pkg := range st.pkgCov {
+		for _, fn := range pkg {
+			if fn.File == f {
+				fns = append(fns, fn)
+			}
+		}
+	}
+
+	sort.Slice(fns, func(i, j int) bool {
+		return fns[i].Name < fns[j].Name
+	})
+
+	return fns, true
+}
+
+func (st *FunctionStats) Package(name string) ([]Function, bool) {
+	fileFuncs, ok := st.pkgCov[name]
 	if !ok {
 		return nil, false
 	}
@@ -137,10 +163,10 @@ func (st *FunctionStats) File(f string) ([]Function, bool) {
 	return vals, true
 }
 
-func parseFuncProfile(output gofunc.Output, opts Options) *FunctionStats {
-	funcStats := FunctionStats{fileCov: map[string]fileFuncCov{}}
+func parseFuncProfile(output gofunc.Output, fileName func(string) string) *FunctionStats {
+	funcStats := FunctionStats{pkgCov: map[string]pkgFuncCov{}}
 	for _, fn := range output.Funcs {
-		file := opts.fileName(fn.File)
+		file := fileName(fn.File)
 		funcStats.addFunc(Function{Name: fn.Function, File: file, CoverPct: fn.Percent, line: fn.Line})
 	}
 
