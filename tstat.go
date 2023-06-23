@@ -16,6 +16,10 @@ import (
 	"golang.org/x/tools/cover"
 )
 
+// CoverageParser is a parser for coverage profiles that can be configured to read from files or io.Readers.
+// If only a cover profile is provided, the corresponding function profile will be generated automatically.
+// If a function profile is provided, it will be used instead of generating one - which is useful when parsing profiles
+// that aren't part of the current project.
 type CoverageParser struct {
 	TrimModule   string
 	WriteTo      io.Writer
@@ -26,42 +30,34 @@ type CoverageParser struct {
 	funcParser  func(io.Reader) (gofunc.Output, error)
 }
 
-func WithRootModule(module string) CoverOpt {
-	return func(cp *CoverageParser) error {
-		cp.TrimModule = filepath.Clean(module)
-		return nil
+// Cover creates a new CoverageParser with the provided options. If no options are provided, the parser will attempt to
+// read the cover and func profiles from the TSTAT_COVER_PROFILE and TSTAT_FUNC_PROFILE environment variables.
+// If those variables are not set, the parser must receive a cover profile via the WithCoverProfile option, or both
+// profiles via the WithFiles option.
+func Cover(coverProfile string, opts ...CoverOpt) (*CoverageParser, error) {
+	f, err := os.Open(coverProfile)
+	if err != nil {
+		return nil, err
 	}
+	fnOut, err := runFuncCover(coverProfile)
+	if err != nil {
+		return nil, err
+	}
+
+	return newCoverageParser(f, bytes.NewBuffer(fnOut), opts...)
 }
 
-func WithFiles(cover, fn io.Reader) CoverOpt {
-	return func(cp *CoverageParser) error {
-		cp.CoverProfile = cover
-		cp.FuncProfile = fn
-		return nil
-	}
+func CoverFromReaders(coverProfile io.Reader, fnProfile io.Reader, opts ...CoverOpt) (*CoverageParser, error) {
+	return newCoverageParser(coverProfile, fnProfile, opts...)
 }
 
-func WithCoverProfile(cover string) CoverOpt {
-	return func(cp *CoverageParser) error {
-		f, err := os.Open(cover)
-		if err != nil {
-			return err
-		}
-		cp.CoverProfile = f
-		fnOut, err := runFuncCover(cover)
-		if err != nil {
-			return err
-		}
-		cp.FuncProfile = bytes.NewBuffer(fnOut)
-		return nil
-	}
-}
-
-func Cover(opts ...CoverOpt) (*CoverageParser, error) {
+func newCoverageParser(cov io.Reader, fn io.Reader, opts ...CoverOpt) (*CoverageParser, error) {
 	parser := &CoverageParser{
-		WriteTo:     nil,
-		coverParser: cover.ParseProfilesFromReader,
-		funcParser:  gofunc.Read,
+		WriteTo:      nil,
+		coverParser:  cover.ParseProfilesFromReader,
+		funcParser:   gofunc.Read,
+		FuncProfile:  fn,
+		CoverProfile: cov,
 	}
 
 	for _, opt := range opts {
@@ -73,7 +69,16 @@ func Cover(opts ...CoverOpt) (*CoverageParser, error) {
 	return parser, nil
 }
 
+// CoverOpt is a functional option for configuring a CoverageParser.
 type CoverOpt func(*CoverageParser) error
+
+// WithRootModule sets the root module to trim from the file names in the coverage profile.
+func WithRootModule(module string) CoverOpt {
+	return func(cp *CoverageParser) error {
+		cp.TrimModule = filepath.Clean(module)
+		return nil
+	}
+}
 
 func (p *CoverageParser) fileName(full string) string {
 	if p.TrimModule == "" {
@@ -82,6 +87,7 @@ func (p *CoverageParser) fileName(full string) string {
 	return strings.TrimPrefix(full, p.TrimModule+"/")
 }
 
+// Stats parses the coverage and function profiles and returns a statistics based on the profiles read.
 func (p *CoverageParser) Stats() (Coverage, error) {
 	profiles, err := p.coverParser(p.CoverProfile)
 	if err != nil {
@@ -109,14 +115,16 @@ type TestParser struct {
 	testParser func(io.Reader) ([]gotest.Event, error)
 }
 
-func Tests(outJSON io.Reader) *TestParser {
+// TestsFromReader creates a new TestParser with the provided io.Reader.
+func TestsFromReader(outJSON io.Reader) *TestParser {
 	return &TestParser{
 		jsonOut:    outJSON,
 		testParser: gotest.ReadJSON,
 	}
 }
 
-func TestsFromFile(outFile string) (*TestParser, error) {
+// Tests creates a new TestParser with the provided file.
+func Tests(outFile string) (*TestParser, error) {
 	f, err := os.Open(outFile)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't open file: %w", err)
@@ -127,6 +135,7 @@ func TestsFromFile(outFile string) (*TestParser, error) {
 	}, nil
 }
 
+// Stats parses the test output and returns a TestRun based on the output read.
 func (p *TestParser) Stats() (TestRun, error) {
 	out, err := p.testParser(p.jsonOut)
 	if err != nil {

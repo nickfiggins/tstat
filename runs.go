@@ -7,6 +7,7 @@ import (
 	"github.com/nickfiggins/tstat/internal/gotest"
 )
 
+// TestRun represents the results of a test run, which may contain multiple packages.
 type TestRun struct {
 	start, end time.Time
 	pkgs       []PackageRun
@@ -16,6 +17,8 @@ func (tr *TestRun) Packages() []PackageRun {
 	return tr.pkgs
 }
 
+// PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,
+// the Seed field will be populated. Otherwise, it will be 0.
 func (tr *TestRun) Package(name string) (PackageRun, bool) {
 	for _, pkg := range tr.pkgs {
 		if strings.EqualFold(name, pkg.pkgName) {
@@ -29,6 +32,7 @@ func (tr *TestRun) Duration() time.Duration {
 	return tr.end.Sub(tr.start)
 }
 
+// Count returns the total number of tests, including subtests.
 func (tr *TestRun) Count() int {
 	var count int
 	for _, pkg := range tr.pkgs {

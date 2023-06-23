@@ -22,7 +22,7 @@ func Test_CoverageStats(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cp, err := tstat.Cover(tstat.WithCoverProfile("testdata/" + tt.covFile))
+			cp, err := tstat.Cover("testdata/" + tt.covFile)
 			if (err != nil) != tt.wantInitErr {
 				t.Errorf("Cover() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -55,7 +55,7 @@ func Test_CoverageStats_CmdError(t *testing.T) {
 	t.Setenv("GOROOT", "bad go root")
 	testDir := "testdata/"
 	covFile := "prog/cover.out"
-	_, err := tstat.Cover(tstat.WithCoverProfile(filepath.Join(testDir, covFile)))
+	_, err := tstat.Cover(filepath.Join(testDir, covFile))
 	wantErr := &exec.ExitError{}
 	if !errors.As(err, &wantErr) {
 		t.Errorf("wanted exec exit error, got err = %v", err)
@@ -75,7 +75,7 @@ func Test_CoverageStatsFromReaders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cp, err := tstat.Cover(tstat.WithCoverProfile(testDir+"/"+tt.covFile), func(cp *tstat.CoverageParser) error {
+			cp, err := tstat.Cover(testDir+"/"+tt.covFile, func(cp *tstat.CoverageParser) error {
 				f, _ := os.Open(testDir + "/" + tt.funcFile)
 				cp.FuncProfile = f
 				return nil
@@ -101,7 +101,7 @@ func Test_CoverageStatsFromReaders(t *testing.T) {
 }
 
 func TestParser_TestRun(t *testing.T) {
-	tp, err := tstat.TestsFromFile("testdata/bigtest.json")
+	tp, err := tstat.Tests("testdata/bigtest.json")
 	if err != nil {
 		t.Fatalf("failed to create test parser: %v", err)
 	}
