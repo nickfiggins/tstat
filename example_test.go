@@ -29,7 +29,7 @@ func ExampleCoverageParser_Stats() {
 	// function: isOdd coverage: 0%
 }
 
-func ExampleParser_TestRun() {
+func ExampleTestParser() {
 	parser, _ := tstat.Tests("testdata/prog/test.json")
 
 	stats, err := parser.Stats()
