@@ -109,8 +109,8 @@ func TestParser_TestRun(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get stats: %v", err)
 	}
-	if !stats.Passed() {
-		t.Fatalf("Passed() returned false, wanted true")
+	if stats.Failed() {
+		t.Fatalf("Failed() returned true, wanted false")
 	}
 
 	if count := stats.Count(); count != 50 {

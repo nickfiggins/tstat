@@ -90,12 +90,12 @@ func (p *CoverageParser) fileName(full string) string {
 func (p *CoverageParser) Stats() (Coverage, error) {
 	profiles, err := p.coverParser(p.CoverProfile)
 	if err != nil {
-		return Coverage{}, err
+		return Coverage{}, fmt.Errorf("couldn't parse cover profile: %w", err)
 	}
 
 	output, err := p.funcParser(p.FuncProfile)
 	if err != nil {
-		return Coverage{}, err
+		return Coverage{}, fmt.Errorf("couldn't parse func profile: %w", err)
 	}
 
 	cov := Coverage{Statement: parseProfiles(profiles, p.fileName), Function: parseFuncProfile(output, p.fileName)}

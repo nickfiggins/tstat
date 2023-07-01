@@ -31,9 +31,9 @@ func (t *Test) Test(name string) *Test {
 	return sub
 }
 
-func (t *Test) Passed() bool {
+func (t *Test) Failed() bool {
 	for _, act := range t.actions {
-		if act == gotest.Pass {
+		if act == gotest.Fail {
 			return true
 		}
 	}
@@ -84,6 +84,9 @@ func toTest(to gotest.Event) Test {
 func byPackage(outputs []gotest.Event) map[string][]gotest.Event {
 	pkgs := make(map[string][]gotest.Event)
 	for _, out := range outputs {
+		if out.Package == "" {
+			continue
+		}
 		pkg, ok := pkgs[out.Package]
 		if !ok {
 			pkgs[out.Package] = append(pkgs[out.Package], out)
@@ -147,6 +150,10 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 					seed = s
 				}
 			}
+			continue
+		}
+
+		if out.Test == "" {
 			continue
 		}
 

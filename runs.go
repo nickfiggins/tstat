@@ -41,13 +41,16 @@ func (tr *TestRun) Count() int {
 	return count
 }
 
-func (tr *TestRun) Passed() bool {
+func (tr *TestRun) Failed() bool {
+	if len(tr.pkgs) == 0 {
+		return false
+	}
 	for _, pkg := range tr.pkgs {
-		if !pkg.Passed() {
-			return false
+		if pkg.Failed() {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func (pr *PackageRun) Test(name string) *Test {
@@ -91,6 +94,6 @@ func (pr *PackageRun) Count() int {
 	return count
 }
 
-func (pr *PackageRun) Passed() bool {
-	return len(withAction(pr.Tests, gotest.Fail)) == 0
+func (pr *PackageRun) Failed() bool {
+	return len(withAction(pr.Tests, gotest.Fail)) > 0
 }
