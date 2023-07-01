@@ -33,7 +33,7 @@ const (
 )
 
 func ToAction(s string) Action {
-	var toAction = map[string]Action{
+	toAction := map[string]Action{
 		"start": Start, "pass": Pass, "fail": Fail, "skip": Skip,
 		"output": Out, "run": Run, "undefined": Undefined,
 	}
@@ -46,7 +46,7 @@ func ToAction(s string) Action {
 }
 
 func (a Action) String() string {
-	var toStr = map[Action]string{
+	toStr := map[Action]string{
 		Start: "start", Pass: "pass", Fail: "fail", Skip: "skip",
 		Out: "output", Run: "run", Undefined: "undefined",
 	}

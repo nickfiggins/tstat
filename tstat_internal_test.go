@@ -34,7 +34,6 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		{
 			name: "happy",
 			parser: TestParser{
-				jsonOut: testFile,
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{
 						{Time: time.Now(), Action: "pass", Test: "Test1", Package: "pkg"},
@@ -55,7 +54,6 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		{
 			name: "happy, nested subtests",
 			parser: TestParser{
-				jsonOut: testFile,
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{
 						{Time: time.Now(), Action: "pass", Test: "Test1", Package: "pkg"},
@@ -79,7 +77,6 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		{
 			name: "error parsing tests",
 			parser: TestParser{
-				jsonOut: testFile,
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{}, errors.New("error parsing tests")
 				},
@@ -91,7 +88,7 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cp := tt.parser
-			got, err := cp.Stats()
+			got, err := cp.Stats(testFile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -149,7 +146,7 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		{
 			name: "happy cov, trim module",
 			parser: CoverageParser{
-				TrimModule: "github.com/mod",
+				trimModule: "github.com/mod",
 				coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 					return []*cover.Profile{
 						{
@@ -205,9 +202,7 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.parser.FuncProfile = tt.funcProfile
-			tt.parser.CoverProfile = testFile
-			got, err := tt.parser.Stats()
+			got, err := tt.parser.Stats(testFile, tt.funcProfile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -228,8 +223,7 @@ func Test_Internal_CoverageStatsFromReaders_WriteTo(t *testing.T) {
 	}
 	buf := bytes.NewBufferString("")
 	parser := CoverageParser{
-		CoverProfile: testFile,
-		TrimModule:   "github.com/mod", WriteTo: buf,
+		trimModule: "github.com/mod", writeTo: buf,
 		coverParser: func(r io.Reader) ([]*cover.Profile, error) {
 			return []*cover.Profile{
 				{
@@ -254,7 +248,7 @@ func Test_Internal_CoverageStatsFromReaders_WriteTo(t *testing.T) {
 		},
 	}
 
-	got, err := parser.Stats()
+	got, err := parser.Stats(testFile, strings.NewReader(""))
 	assert.NoError(t, err)
 	assert.Equal(t, want, got)
 

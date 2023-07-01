@@ -22,19 +22,9 @@ func Test_CoverageStats(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cp, err := tstat.Cover("testdata/" + tt.covFile)
+			got, err := tstat.Cover("testdata/" + tt.covFile)
 			if (err != nil) != tt.wantInitErr {
 				t.Errorf("Cover() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.wantInitErr {
-				return
-			}
-
-			got, err := cp.Stats()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Stats() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err != nil {
@@ -75,20 +65,13 @@ func Test_CoverageStatsFromReaders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cp, err := tstat.Cover(testDir+"/"+tt.covFile, func(cp *tstat.CoverageParser) error {
-				f, _ := os.Open(testDir + "/" + tt.funcFile)
-				cp.FuncProfile = f
-				return nil
-			})
+			f, _ := os.Open(testDir + "/" + tt.covFile)
+			f2, _ := os.Open(testDir + "/" + tt.funcFile)
+			got, err := tstat.CoverFromReaders(f, f2)
 			if err != nil {
 				t.Fatalf("failed to create coverage parser: %v", err)
 			}
 
-			got, err := cp.Stats()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
 			if got.Statement.CoverPct != tt.wantPercent {
 				t.Errorf("Read() = got statement pct %v, wanted %v", got.Statement.CoverPct, tt.wantPercent)
 			}
@@ -101,13 +84,9 @@ func Test_CoverageStatsFromReaders(t *testing.T) {
 }
 
 func TestParser_TestRun(t *testing.T) {
-	tp, err := tstat.Tests("testdata/bigtest.json")
+	stats, err := tstat.Tests("testdata/bigtest.json")
 	if err != nil {
 		t.Fatalf("failed to create test parser: %v", err)
-	}
-	stats, err := tp.Stats()
-	if err != nil {
-		t.Fatalf("failed to get stats: %v", err)
 	}
 	if stats.Failed() {
 		t.Fatalf("Failed() returned true, wanted false")
