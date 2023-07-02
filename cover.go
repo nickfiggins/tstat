@@ -1,9 +1,6 @@
 package tstat
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"sort"
 	"strings"
 
@@ -14,15 +11,6 @@ import (
 type Coverage struct {
 	Function  *FunctionStats  `json:"function,omitempty"`
 	Statement *StatementStats `json:"statement,omitempty"`
-}
-
-func (c *Coverage) writeTo(w io.Writer) error {
-	b, err := json.Marshal(c) // TODO: write to the writer in a better format
-	if err != nil {
-		return fmt.Errorf("couldn't marshal json: %w", err)
-	}
-	_, err = w.Write(b)
-	return err
 }
 
 type StatementStats struct {

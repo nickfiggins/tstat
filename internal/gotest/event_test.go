@@ -1,6 +1,9 @@
 package gotest
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func Test_ToAction(t *testing.T) {
 	tests := []struct {
@@ -53,5 +56,90 @@ func TestAction_IsFinal(t *testing.T) {
 		if got := tt.have.IsFinal(); got != tt.want {
 			t.Errorf("Action(%v).IsFinal() = %v, want %v", tt.have, got, tt.want)
 		}
+	}
+}
+
+func TestEvent_Seed(t *testing.T) {
+	type fields struct {
+		Time    time.Time
+		Action  Action
+		Output  string
+		Test    string
+		Package string
+		Elapsed float64
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   int64
+	}{
+		{
+			name: "no seed",
+			fields: fields{
+				Time:    time.Now(),
+				Action:  Start,
+				Output:  "some output",
+				Test:    "some test",
+				Package: "some package",
+				Elapsed: 0.0,
+			},
+			want: 0,
+		},
+		{
+			name: "no seed",
+			fields: fields{
+				Time:    time.Now(),
+				Action:  Start,
+				Output:  "-test.shuffle 123",
+				Test:    "some test",
+				Package: "some package",
+				Elapsed: 0.0,
+			},
+			want: 123,
+		},
+		{
+			name: "seed isn't an int",
+			fields: fields{
+				Time:    time.Now(),
+				Action:  Start,
+				Output:  "-test.shuffle oiddoifeoi",
+				Test:    "some test",
+				Package: "some package",
+				Elapsed: 0.0,
+			},
+			want: 0,
+		},
+		{
+			name: "no seed",
+			fields: fields{
+				Time:    time.Now(),
+				Action:  Start,
+				Output:  "-test.shuffle 1688261989310323000\n",
+				Test:    "some test",
+				Package: "some package",
+				Elapsed: 0.0,
+			},
+			want: 1688261989310323000,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &Event{
+				Time:    tt.fields.Time,
+				Action:  tt.fields.Action,
+				Output:  tt.fields.Output,
+				Test:    tt.fields.Test,
+				Package: tt.fields.Package,
+				Elapsed: tt.fields.Elapsed,
+			}
+			got, gotOK := e.Seed()
+			if got != tt.want {
+				t.Errorf("Event.Seed() got = %v, want %v", got, tt.want)
+			}
+
+			if got == 0 && gotOK {
+				t.Error("got 0, gotOK true")
+			}
+		})
 	}
 }
