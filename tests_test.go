@@ -21,8 +21,8 @@ func Test_parseTestOutputs(t *testing.T) {
 			name: "with seed",
 			args: args{
 				outputs: []gotest.Event{
-					{Action: "start", Package: "pkg"},
-					{Action: "output", Package: "pkg", Output: "-test.shuffle 1686798048639894000\n"},
+					{Action: gotest.Start, Package: "pkg"},
+					{Action: gotest.Out, Package: "pkg", Output: "-test.shuffle 1686798048639894000\n"},
 				},
 			},
 			want: TestRun{
@@ -41,9 +41,9 @@ func Test_parseTestOutputs(t *testing.T) {
 			name: "with seed",
 			args: args{
 				outputs: []gotest.Event{
-					{Action: "run", Package: "pkg", Test: "TestAdd"},
-					{Action: "output", Package: "pkg", Test: "TestAdd"},
-					{Action: "pass", Package: "pkg", Test: "TestAdd"},
+					{Action: gotest.Run, Package: "pkg", Test: "TestAdd"},
+					{Action: gotest.Out, Package: "pkg", Test: "TestAdd"},
+					{Action: gotest.Pass, Package: "pkg", Test: "TestAdd"},
 				},
 			},
 			want: TestRun{

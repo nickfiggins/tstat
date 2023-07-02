@@ -9,14 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func format(t *testing.T, ts string) time.Time {
-	parsed, err := time.Parse(time.RFC3339Nano, ts)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return parsed
-}
-
 func TestReadJSON(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -33,12 +25,12 @@ func TestReadJSON(t *testing.T) {
 			want: []Event{
 				{
 					Time:    format(t, "2023-05-13T21:30:15.409912-04:00"),
-					Action:  "start",
+					Action:  Start,
 					Package: "github.com/nickfiggins/tstat/testdata/prog",
 				},
 				{
 					Time:    format(t, "2023-05-13T21:30:15.59089-04:00"),
-					Action:  "pass",
+					Action:  Pass,
 					Package: "github.com/nickfiggins/tstat/testdata/prog",
 					Elapsed: 0.181,
 				},
@@ -56,27 +48,27 @@ func TestReadJSON(t *testing.T) {
 			want: []Event{
 				{
 					Time:    format(t, "2023-05-13T21:30:15.587441-04:00"),
-					Action:  "run",
+					Action:  Run,
 					Package: "github.com/nickfiggins/tstat/testdata/prog",
 					Test:    "TestAdd",
 				},
 				{
 					Time:    format(t, "2023-05-13T21:30:15.587512-04:00"),
-					Action:  "output",
+					Action:  Out,
 					Package: "github.com/nickfiggins/tstat/testdata/prog",
 					Output:  "=== RUN   TestAdd\n",
 					Test:    "TestAdd",
 				},
 				{
 					Time:    format(t, "2023-05-13T21:30:15.587549-04:00"),
-					Action:  "output",
+					Action:  Out,
 					Package: "github.com/nickfiggins/tstat/testdata/prog",
 					Output:  "--- PASS: TestAdd (0.00s)\n",
 					Test:    "TestAdd",
 				},
 				{
 					Time:    format(t, "2023-05-13T21:30:15.587555-04:00"),
-					Action:  "pass",
+					Action:  Pass,
 					Package: "github.com/nickfiggins/tstat/testdata/prog",
 					Test:    "TestAdd",
 				},
@@ -96,56 +88,10 @@ func TestReadJSON(t *testing.T) {
 	}
 }
 
-func Test_ToAction(t *testing.T) {
-	tests := []struct {
-		have string
-		want Action
-	}{
-		{"PASS", Pass}, {"FAIL", Fail}, {"fAiL", Fail},
-		{"output", Out}, {"skip", Skip}, {"start", Start},
-		{"dfioroiriooi", Undefined}, {"undefined", Undefined},
+func format(t *testing.T, ts string) time.Time {
+	parsed, err := time.Parse(time.RFC3339Nano, ts)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		if got := ToAction(tt.have); got != tt.want {
-			t.Errorf("ToAction(%v) = %v, want %v", tt.have, got, tt.want)
-		}
-	}
-}
-
-func TestAction_String(t *testing.T) {
-	tests := []struct {
-		have Action
-		want string
-	}{
-		{Pass, "pass"},
-		{Fail, "fail"},
-		{Out, "output"},
-		{Skip, "skip"},
-		{Start, "start"},
-		{Action(-1), "undefined"},
-	}
-	for _, tt := range tests {
-		if got := tt.have.String(); got != tt.want {
-			t.Errorf("Action(%v).String() = %v, want %v", tt.have, got, tt.want)
-		}
-	}
-}
-
-func TestAction_IsFinal(t *testing.T) {
-	tests := []struct {
-		have Action
-		want bool
-	}{
-		{Pass, true},
-		{Fail, true},
-		{Out, false},
-		{Skip, true},
-		{Start, false},
-		{Action(-1), false},
-	}
-	for _, tt := range tests {
-		if got := tt.have.IsFinal(); got != tt.want {
-			t.Errorf("Action(%v).IsFinal() = %v, want %v", tt.have, got, tt.want)
-		}
-	}
+	return parsed
 }

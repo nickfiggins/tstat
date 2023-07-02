@@ -36,9 +36,9 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 			parser: TestParser{
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{
-						{Time: time.Now(), Action: "pass", Test: "Test1", Package: "pkg"},
-						{Time: time.Now(), Action: "pass", Test: "Test2", Package: "pkg"},
-						{Time: time.Now(), Action: "pass", Test: "Test2/sub", Package: "pkg"},
+						{Time: time.Now(), Action: gotest.Pass, Test: "Test1", Package: "pkg"},
+						{Time: time.Now(), Action: gotest.Pass, Test: "Test2", Package: "pkg"},
+						{Time: time.Now(), Action: gotest.Pass, Test: "Test2/sub", Package: "pkg"},
 					}, nil
 				},
 			},
@@ -56,10 +56,10 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 			parser: TestParser{
 				testParser: func(r io.Reader) ([]gotest.Event, error) {
 					return []gotest.Event{
-						{Time: time.Now(), Action: "pass", Test: "Test1", Package: "pkg"},
-						{Time: time.Now(), Action: "pass", Test: "Test2", Package: "pkg"},
-						{Time: time.Now(), Action: "pass", Test: "Test2/sub", Package: "pkg"},
-						{Time: time.Now(), Action: "pass", Test: "Test2/sub/sub2", Package: "pkg"},
+						{Time: time.Now(), Action: gotest.Pass, Test: "Test1", Package: "pkg"},
+						{Time: time.Now(), Action: gotest.Pass, Test: "Test2", Package: "pkg"},
+						{Time: time.Now(), Action: gotest.Pass, Test: "Test2/sub", Package: "pkg"},
+						{Time: time.Now(), Action: gotest.Pass, Test: "Test2/sub/sub2", Package: "pkg"},
 					}, nil
 				},
 			},
