@@ -106,11 +106,9 @@ func Test_ToAction(t *testing.T) {
 		{"dfioroiriooi", Undefined}, {"undefined", Undefined},
 	}
 	for _, tt := range tests {
-		t.Run(tt.have, func(t *testing.T) {
-			if got := ToAction(tt.have); got != tt.want {
-				t.Errorf("ToAction = %v, want %v", got, tt.want)
-			}
-		})
+		if got := ToAction(tt.have); got != tt.want {
+			t.Errorf("ToAction(%v) = %v, want %v", tt.have, got, tt.want)
+		}
 	}
 }
 
@@ -127,11 +125,9 @@ func TestAction_String(t *testing.T) {
 		{Action(-1), "undefined"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			if got := tt.have.String(); got != tt.want {
-				t.Errorf("Action.String() = %v, want %v", got, tt.want)
-			}
-		})
+		if got := tt.have.String(); got != tt.want {
+			t.Errorf("Action(%v).String() = %v, want %v", tt.have, got, tt.want)
+		}
 	}
 }
 
@@ -148,10 +144,8 @@ func TestAction_IsFinal(t *testing.T) {
 		{Action(-1), false},
 	}
 	for _, tt := range tests {
-		t.Run(tt.have.String(), func(t *testing.T) {
-			if got := tt.have.IsFinal(); got != tt.want {
-				t.Errorf("Action.IsFinal() = %v, want %v", got, tt.want)
-			}
-		})
+		if got := tt.have.IsFinal(); got != tt.want {
+			t.Errorf("Action(%v).IsFinal() = %v, want %v", tt.have, got, tt.want)
+		}
 	}
 }

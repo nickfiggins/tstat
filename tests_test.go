@@ -26,6 +26,7 @@ func Test_parseTestOutputs(t *testing.T) {
 				},
 			},
 			want: TestRun{
+				root: "pkg",
 				pkgs: []PackageRun{
 					{
 						pkgName: "pkg",
@@ -46,6 +47,7 @@ func Test_parseTestOutputs(t *testing.T) {
 				},
 			},
 			want: TestRun{
+				root: "pkg",
 				pkgs: []PackageRun{
 					{
 						pkgName: "pkg",

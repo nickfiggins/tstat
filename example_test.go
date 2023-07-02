@@ -35,7 +35,7 @@ func ExampleTests() {
 	fmt.Println(stats.Count(), stats.Failed(), stats.Duration().String())
 	pkg, _ := stats.Package("github.com/nickfiggins/tstat")
 	test := pkg.Test("Test_CoverageStats")
-	fmt.Println(test.Count(), test.Failed())
+	fmt.Println(test.Count(), test.Failed(), test.Package)
 	// Output: 50 false 473.097ms
-	// 3 false
+	// 3 false github.com/nickfiggins/tstat
 }

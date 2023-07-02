@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/nickfiggins/tstat"
 )
@@ -84,16 +85,58 @@ func Test_CoverageStatsFromReaders(t *testing.T) {
 }
 
 func TestParser_TestRun(t *testing.T) {
-	stats, err := tstat.Tests("testdata/bigtest.json")
-	if err != nil {
-		t.Fatalf("failed to create test parser: %v", err)
+	type want struct {
+		count    int
+		failed   bool
+		duration time.Duration
+		seed     int64
 	}
-	if stats.Failed() {
-		t.Fatalf("Failed() returned true, wanted false")
+	compare := func(t *testing.T, want want, got tstat.TestRun) {
+		t.Helper()
+		if got.Count() != want.count {
+			t.Errorf("got count %v, want %v", got.Count(), want.count)
+		}
+		if got.Failed() != want.failed {
+			t.Errorf("got failed %v, want %v", got.Failed(), want.failed)
+		}
+		gotRounded := got.Duration().Round(time.Millisecond)
+		if gotRounded != want.duration {
+			t.Errorf("got duration %v, want %v", gotRounded, want.duration)
+		}
+
+		r, _ := got.Root()
+		if r.Seed != want.seed {
+			t.Errorf("got seed %v, want %v", got.Packages()[0].Seed, want.seed)
+		}
 	}
 
-	if count := stats.Count(); count != 50 {
-		t.Fatalf("wanted 50 tests, got %v", count)
+	tests := []struct {
+		testFile string
+		want     want
+		wantErr  bool
+	}{
+		{
+			testFile: "testdata/bigtest.json",
+			want:     want{50, false, 473 * time.Millisecond, 0},
+			wantErr:  false,
+		},
+		{
+			testFile: "testdata/go-cmp.json",
+			want:     want{455, false, 1082 * time.Millisecond, 1688261989310323000},
+			wantErr:  false,
+		},
 	}
-
+	for _, tt := range tests {
+		t.Run(tt.testFile, func(t *testing.T) {
+			stats, err := tstat.Tests(tt.testFile)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Tests() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				return
+			}
+			compare(t, tt.want, stats)
+		})
+	}
 }

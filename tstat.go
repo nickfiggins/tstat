@@ -47,6 +47,14 @@ func Cover(coverProfile string, opts ...CoverOpt) (Coverage, error) {
 }
 
 func CoverFromReaders(coverProfile io.Reader, fnProfile io.Reader, opts ...CoverOpt) (Coverage, error) {
+	if coverProfile == nil {
+		return Coverage{}, errors.New("cover profile must not be nil")
+	}
+
+	if fnProfile == nil {
+		return Coverage{}, errors.New("function profile must not be nil")
+	}
+
 	cp := NewCoverageParser(opts...)
 	return cp.Stats(coverProfile, fnProfile)
 }

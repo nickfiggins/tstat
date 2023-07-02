@@ -81,9 +81,13 @@ func toTest(to gotest.Event) Test {
 	}
 }
 
-func byPackage(outputs []gotest.Event) map[string][]gotest.Event {
+func byPackage(outputs []gotest.Event) (map[string][]gotest.Event, string) {
 	pkgs := make(map[string][]gotest.Event)
+	var root string
 	for _, out := range outputs {
+		if root == "" && out.Package != "" {
+			root = out.Package
+		}
 		if out.Package == "" {
 			continue
 		}
@@ -96,12 +100,12 @@ func byPackage(outputs []gotest.Event) map[string][]gotest.Event {
 		pkgs[out.Package] = pkg
 	}
 
-	return pkgs
+	return pkgs, root
 }
 
 func parseTestOutputs(outputs []gotest.Event) (TestRun, error) {
-	pkgTests := byPackage(outputs)
-	suite := TestRun{}
+	pkgTests, root := byPackage(outputs)
+	suite := TestRun{root: root}
 	for name, tests := range pkgTests {
 		run, err := parsePackageTests(tests)
 		if err != nil {
@@ -114,6 +118,7 @@ func parseTestOutputs(outputs []gotest.Event) (TestRun, error) {
 		if suite.end.IsZero() || run.end.After(suite.end) {
 			suite.end = run.end
 		}
+
 		run.pkgName = name
 		suite.pkgs = append(suite.pkgs, run)
 	}
@@ -138,6 +143,7 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 	tmap := make(map[string]Test, 0)
 	var start, end time.Time
 	var seed int64
+	var failed bool
 	for _, out := range outputs {
 		if isPackageEvent(out) {
 			switch {
@@ -145,6 +151,7 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 				start = out.Time
 			case isEnd(out):
 				end = out.Time
+				failed = gotest.ToAction(out.Action) == gotest.Fail
 			case gotest.ToAction(out.Action) == gotest.Out:
 				if s, ok := getSeed(out); ok {
 					seed = s
@@ -178,8 +185,9 @@ func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
 
 	return PackageRun{
 		start: start, end: end,
-		Tests: rootTests,
-		Seed:  seed,
+		Tests:  rootTests,
+		Seed:   seed,
+		failed: failed,
 	}, nil
 }
 
@@ -213,19 +221,6 @@ func nestSubtests(tests []Test) ([]*Test, error) {
 	}
 
 	return maps.Values(rootTests), nil
-}
-
-func withAction(tests []*Test, action gotest.Action) []*Test {
-	sl := make([]*Test, 0)
-	for _, test := range tests {
-		for _, act := range test.actions {
-			if act == action {
-				sl = append(sl, test)
-				break
-			}
-		}
-	}
-	return sl
 }
 
 // byTestName sorts tests by their name, which ensures that all parent tests come

@@ -67,6 +67,9 @@ func percent(covered, total int) float64 {
 func parseProfile(cp *cover.Profile) File {
 	stmts, coveredStmts := 0, 0
 	for _, bk := range cp.Blocks {
+		if bk.NumStmt == 0 {
+			continue
+		}
 		stmts += bk.NumStmt
 		if bk.Count > 0 {
 			coveredStmts++
