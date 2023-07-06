@@ -18,16 +18,12 @@ type Test struct {
 	Package  string
 }
 
-func (t *Test) Test(name string) *Test {
+func (t *Test) Test(name string) (*Test, bool) {
 	if name == t.Name {
-		return t
+		return t, true
 	}
 
-	sub, ok := findTest(name, t.Subtests...)
-	if !ok {
-		return &Test{}
-	}
-	return sub
+	return findTest(name, t.Subtests...)
 }
 
 func (t *Test) Failed() bool {

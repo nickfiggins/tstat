@@ -9,12 +9,12 @@ import (
 )
 
 type Coverage struct {
-	Function  *FunctionStats  `json:"function,omitempty"`
-	Statement *StatementStats `json:"statement,omitempty"`
+	Function  *FunctionStats
+	Statement *StatementStats
 }
 
 type StatementStats struct {
-	CoverPct float64 `json:"coverPct,omitempty"`
+	CoverPct float64
 	fileCov  map[string]File
 }
 
@@ -30,9 +30,8 @@ func (st *StatementStats) File(f string) (File, bool) {
 }
 
 func parseProfiles(profiles []*cover.Profile, fileName func(string) string) *StatementStats {
-	cov := map[string]File{}
-	total := 0
-	covered := 0
+	cov := make(map[string]File, len(profiles))
+	total, covered := 0, 0
 	for _, prof := range profiles {
 		fileCov := parseProfile(prof)
 		file := fileName(prof.FileName)

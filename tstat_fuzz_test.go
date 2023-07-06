@@ -53,7 +53,7 @@ func FuzzPackagesTestsFromReaders(f *testing.F) {
 				if test.Name == "" {
 					t.Fatal("test name should be defined for non-error")
 				}
-				if pkg.Test(test.Name) != test {
+				if _, ok := pkg.Test(test.Name); !ok {
 					t.Fatal("test should be accessible from package")
 				}
 			}

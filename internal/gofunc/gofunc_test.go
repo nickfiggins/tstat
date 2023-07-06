@@ -25,12 +25,14 @@ func TestRead(t *testing.T) {
 				Percent: 25,
 				Funcs: []Function{
 					{
+						Package:  "github.com/nickfiggins/tstat/testdata/prog",
 						File:     "github.com/nickfiggins/tstat/testdata/prog/prog.go",
 						Line:     3,
 						Function: "add",
 						Percent:  100,
 					},
 					{
+						Package:  "github.com/nickfiggins/tstat/testdata/prog",
 						File:     "github.com/nickfiggins/tstat/testdata/prog/prog.go",
 						Line:     7,
 						Function: "isOdd",

@@ -56,12 +56,8 @@ func (tr *TestRun) Failed() bool {
 	return false
 }
 
-func (pr *PackageRun) Test(name string) *Test {
-	t, ok := findTest(name, pr.Tests...)
-	if !ok {
-		return &Test{}
-	}
-	return t
+func (pr *PackageRun) Test(name string) (*Test, bool) {
+	return findTest(name, pr.Tests...)
 }
 
 func findTest(name string, tests ...*Test) (*Test, bool) {
@@ -71,7 +67,9 @@ func findTest(name string, tests ...*Test) (*Test, bool) {
 		}
 
 		if t.looksLikeSub(name) {
-			return findTest(name, t.Subtests...)
+			if sub, ok := findTest(name, t.Subtests...); ok {
+				return sub, true
+			}
 		}
 	}
 	return nil, false
