@@ -12,6 +12,7 @@ tasks:
   cov:
     cmds:
     - go tool cover -html=cover.out -o cover.html
+    - go tool cover -func=cover.out -o func.out
     - open cover.html
   doc:
     cmds: 

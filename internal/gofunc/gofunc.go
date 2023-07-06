@@ -14,6 +14,7 @@ type Output struct {
 }
 
 type Function struct {
+	Package  string
 	File     string
 	Line     int
 	Function string
@@ -54,7 +55,13 @@ func Read(r io.Reader) (Output, error) {
 			return Output{}, fmt.Errorf("invalid line number in row %v, num '%v'", sc.Text(), line)
 		}
 
+		var pkg string
+		if i := strings.LastIndex(file, "/"); i != -1 {
+			pkg = file[:i]
+		}
+
 		funcs = append(funcs, Function{
+			Package:  pkg,
 			File:     file,
 			Line:     lineInt,
 			Function: entry[1],
@@ -68,4 +75,34 @@ func Read(r io.Reader) (Output, error) {
 	}
 
 	return Output{Funcs: funcs, Percent: totalPercent}, nil
+}
+
+type PackageFunctions struct {
+	Package   string
+	Functions []Function
+}
+
+func ByPackage(output Output) []*PackageFunctions {
+	packages := make(map[string]*PackageFunctions)
+	for _, f := range output.Funcs {
+		if f.Package == "" {
+			continue
+		}
+		pkg, ok := packages[f.Package]
+		if !ok {
+			packages[f.Package] = &PackageFunctions{
+				Package:   f.Package,
+				Functions: []Function{f},
+			}
+			continue
+		}
+		pkg.Functions = append(pkg.Functions, f)
+	}
+
+	vals := make([]*PackageFunctions, 0, len(packages))
+	for _, v := range packages {
+		vals = append(vals, v)
+	}
+
+	return vals
 }

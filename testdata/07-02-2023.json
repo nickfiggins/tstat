@@ -1,0 +1,178 @@
+{"Time":"2023-07-02T11:15:08.676447-04:00","Action":"start","Package":"github.com/nickfiggins/tstat"}
+{"Time":"2023-07-02T11:15:08.677184-04:00","Action":"start","Package":"github.com/nickfiggins/tstat/internal/gofunc"}
+{"Time":"2023-07-02T11:15:08.677231-04:00","Action":"start","Package":"github.com/nickfiggins/tstat/internal/gotest"}
+{"Time":"2023-07-02T11:15:08.896392-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Output":"-test.shuffle 1688310908894717000\n"}
+{"Time":"2023-07-02T11:15:08.896549-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun"}
+{"Time":"2023-07-02T11:15:08.896562-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun","Output":"=== RUN   TestParser_TestRun\n"}
+{"Time":"2023-07-02T11:15:08.896576-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/bigtest.json"}
+{"Time":"2023-07-02T11:15:08.896585-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/bigtest.json","Output":"=== RUN   TestParser_TestRun/testdata/bigtest.json\n"}
+{"Time":"2023-07-02T11:15:08.902724-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/go-cmp.json"}
+{"Time":"2023-07-02T11:15:08.902775-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/go-cmp.json","Output":"=== RUN   TestParser_TestRun/testdata/go-cmp.json\n"}
+{"Time":"2023-07-02T11:15:09.05362-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Output":"-test.shuffle 1688310909053483000\n"}
+{"Time":"2023-07-02T11:15:09.053818-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead"}
+{"Time":"2023-07-02T11:15:09.053847-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead","Output":"=== RUN   TestRead\n"}
+{"Time":"2023-07-02T11:15:09.053965-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/happy"}
+{"Time":"2023-07-02T11:15:09.054003-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/happy","Output":"=== RUN   TestRead/happy\n"}
+{"Time":"2023-07-02T11:15:09.054372-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/empty_reader"}
+{"Time":"2023-07-02T11:15:09.0544-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/empty_reader","Output":"=== RUN   TestRead/empty_reader\n"}
+{"Time":"2023-07-02T11:15:09.054708-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/just_percent"}
+{"Time":"2023-07-02T11:15:09.054733-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/just_percent","Output":"=== RUN   TestRead/just_percent\n"}
+{"Time":"2023-07-02T11:15:09.054983-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/invalid_percent"}
+{"Time":"2023-07-02T11:15:09.055012-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/invalid_percent","Output":"=== RUN   TestRead/invalid_percent\n"}
+{"Time":"2023-07-02T11:15:09.055263-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/missing_line_num"}
+{"Time":"2023-07-02T11:15:09.055315-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/missing_line_num","Output":"=== RUN   TestRead/missing_line_num\n"}
+{"Time":"2023-07-02T11:15:09.05624-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead","Output":"--- PASS: TestRead (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.056276-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/happy","Output":"    --- PASS: TestRead/happy (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.056303-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/happy","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.056709-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/empty_reader","Output":"    --- PASS: TestRead/empty_reader (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.056732-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/empty_reader","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.056749-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/just_percent","Output":"    --- PASS: TestRead/just_percent (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.056787-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/just_percent","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.056799-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/invalid_percent","Output":"    --- PASS: TestRead/invalid_percent (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.056808-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/invalid_percent","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.056818-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/missing_line_num","Output":"    --- PASS: TestRead/missing_line_num (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.056841-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead/missing_line_num","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.056851-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gofunc","Test":"TestRead","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.056858-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Output":"PASS\n"}
+{"Time":"2023-07-02T11:15:09.059258-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Output":"\tgithub.com/nickfiggins/tstat/internal/gofunc\tcoverage: 88.0% of statements\n"}
+{"Time":"2023-07-02T11:15:09.067031-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun","Output":"--- PASS: TestParser_TestRun (0.17s)\n"}
+{"Time":"2023-07-02T11:15:09.067107-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/bigtest.json","Output":"    --- PASS: TestParser_TestRun/testdata/bigtest.json (0.01s)\n"}
+{"Time":"2023-07-02T11:15:09.067141-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/bigtest.json","Elapsed":0.01}
+{"Time":"2023-07-02T11:15:09.067949-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/go-cmp.json","Output":"    --- PASS: TestParser_TestRun/testdata/go-cmp.json (0.16s)\n"}
+{"Time":"2023-07-02T11:15:09.067971-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun/testdata/go-cmp.json","Elapsed":0.16}
+{"Time":"2023-07-02T11:15:09.06798-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"TestParser_TestRun","Elapsed":0.17}
+{"Time":"2023-07-02T11:15:09.067987-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader"}
+{"Time":"2023-07-02T11:15:09.067995-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader","Output":"=== RUN   Test_Internal_TestRunFromReader\n"}
+{"Time":"2023-07-02T11:15:09.068004-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy"}
+{"Time":"2023-07-02T11:15:09.068014-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy","Output":"=== RUN   Test_Internal_TestRunFromReader/happy\n"}
+{"Time":"2023-07-02T11:15:09.06806-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy,_nested_subtests"}
+{"Time":"2023-07-02T11:15:09.0681-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy,_nested_subtests","Output":"=== RUN   Test_Internal_TestRunFromReader/happy,_nested_subtests\n"}
+{"Time":"2023-07-02T11:15:09.068273-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/error_parsing_tests"}
+{"Time":"2023-07-02T11:15:09.068301-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/error_parsing_tests","Output":"=== RUN   Test_Internal_TestRunFromReader/error_parsing_tests\n"}
+{"Time":"2023-07-02T11:15:09.069564-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader","Output":"--- PASS: Test_Internal_TestRunFromReader (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.069596-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy","Output":"    --- PASS: Test_Internal_TestRunFromReader/happy (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.069614-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.069627-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy,_nested_subtests","Output":"    --- PASS: Test_Internal_TestRunFromReader/happy,_nested_subtests (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.069643-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/happy,_nested_subtests","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.069671-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/error_parsing_tests","Output":"    --- PASS: Test_Internal_TestRunFromReader/error_parsing_tests (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.06969-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader/error_parsing_tests","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.069703-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_TestRunFromReader","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.069718-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs"}
+{"Time":"2023-07-02T11:15:09.069731-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs","Output":"=== RUN   Test_parseTestOutputs\n"}
+{"Time":"2023-07-02T11:15:09.069746-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed"}
+{"Time":"2023-07-02T11:15:09.069761-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed","Output":"=== RUN   Test_parseTestOutputs/with_seed\n"}
+{"Time":"2023-07-02T11:15:09.0699-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed#01"}
+{"Time":"2023-07-02T11:15:09.069936-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed#01","Output":"=== RUN   Test_parseTestOutputs/with_seed#01\n"}
+{"Time":"2023-07-02T11:15:09.070081-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs","Output":"--- PASS: Test_parseTestOutputs (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.070103-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed","Output":"    --- PASS: Test_parseTestOutputs/with_seed (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.070115-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.070125-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed#01","Output":"    --- PASS: Test_parseTestOutputs/with_seed#01 (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.070138-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs/with_seed#01","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.070173-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_parseTestOutputs","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.070186-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders"}
+{"Time":"2023-07-02T11:15:09.070199-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders","Output":"=== RUN   Test_CoverageStatsFromReaders\n"}
+{"Time":"2023-07-02T11:15:09.070226-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders/happy"}
+{"Time":"2023-07-02T11:15:09.070258-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders/happy","Output":"=== RUN   Test_CoverageStatsFromReaders/happy\n"}
+{"Time":"2023-07-02T11:15:09.072095-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders","Output":"--- PASS: Test_CoverageStatsFromReaders (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.072117-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders/happy","Output":"    --- PASS: Test_CoverageStatsFromReaders/happy (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.072131-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders/happy","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.072139-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStatsFromReaders","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.072148-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders_WriteTo"}
+{"Time":"2023-07-02T11:15:09.072156-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders_WriteTo","Output":"=== RUN   Test_Internal_CoverageStatsFromReaders_WriteTo\n"}
+{"Time":"2023-07-02T11:15:09.074086-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders_WriteTo","Output":"--- PASS: Test_Internal_CoverageStatsFromReaders_WriteTo (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.074251-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders_WriteTo","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.074282-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders"}
+{"Time":"2023-07-02T11:15:09.074296-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders","Output":"=== RUN   Test_Internal_CoverageStatsFromReaders\n"}
+{"Time":"2023-07-02T11:15:09.074821-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov"}
+{"Time":"2023-07-02T11:15:09.074841-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov","Output":"=== RUN   Test_Internal_CoverageStatsFromReaders/happy_cov\n"}
+{"Time":"2023-07-02T11:15:09.074989-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov,_trim_module"}
+{"Time":"2023-07-02T11:15:09.075022-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov,_trim_module","Output":"=== RUN   Test_Internal_CoverageStatsFromReaders/happy_cov,_trim_module\n"}
+{"Time":"2023-07-02T11:15:09.07514-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_coverage"}
+{"Time":"2023-07-02T11:15:09.075174-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_coverage","Output":"=== RUN   Test_Internal_CoverageStatsFromReaders/error_reading_coverage\n"}
+{"Time":"2023-07-02T11:15:09.075319-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_func_profile"}
+{"Time":"2023-07-02T11:15:09.075364-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_func_profile","Output":"=== RUN   Test_Internal_CoverageStatsFromReaders/error_reading_func_profile\n"}
+{"Time":"2023-07-02T11:15:09.076716-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gofunc","Output":"ok  \tgithub.com/nickfiggins/tstat/internal/gofunc\t0.399s\tcoverage: 88.0% of statements\n"}
+{"Time":"2023-07-02T11:15:09.076767-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gofunc","Elapsed":0.4}
+{"Time":"2023-07-02T11:15:09.076951-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders","Output":"--- PASS: Test_Internal_CoverageStatsFromReaders (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.076998-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov","Output":"    --- PASS: Test_Internal_CoverageStatsFromReaders/happy_cov (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.077017-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.077032-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov,_trim_module","Output":"    --- PASS: Test_Internal_CoverageStatsFromReaders/happy_cov,_trim_module (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.077089-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/happy_cov,_trim_module","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.077114-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_coverage","Output":"    --- PASS: Test_Internal_CoverageStatsFromReaders/error_reading_coverage (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.077127-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_coverage","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.077136-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_func_profile","Output":"    --- PASS: Test_Internal_CoverageStatsFromReaders/error_reading_func_profile (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.077162-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders/error_reading_func_profile","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.077176-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_Internal_CoverageStatsFromReaders","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.077192-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats"}
+{"Time":"2023-07-02T11:15:09.077224-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats","Output":"=== RUN   Test_CoverageStats\n"}
+{"Time":"2023-07-02T11:15:09.077247-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/happy"}
+{"Time":"2023-07-02T11:15:09.077263-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/happy","Output":"=== RUN   Test_CoverageStats/happy\n"}
+{"Time":"2023-07-02T11:15:09.119836-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/file_not_found"}
+{"Time":"2023-07-02T11:15:09.119869-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/file_not_found","Output":"=== RUN   Test_CoverageStats/file_not_found\n"}
+{"Time":"2023-07-02T11:15:09.12003-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats","Output":"--- PASS: Test_CoverageStats (0.04s)\n"}
+{"Time":"2023-07-02T11:15:09.120045-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/happy","Output":"    --- PASS: Test_CoverageStats/happy (0.04s)\n"}
+{"Time":"2023-07-02T11:15:09.12007-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/happy","Elapsed":0.04}
+{"Time":"2023-07-02T11:15:09.120082-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/file_not_found","Output":"    --- PASS: Test_CoverageStats/file_not_found (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.120092-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats/file_not_found","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.120099-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats","Elapsed":0.04}
+{"Time":"2023-07-02T11:15:09.120105-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats_CmdError"}
+{"Time":"2023-07-02T11:15:09.12011-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats_CmdError","Output":"=== RUN   Test_CoverageStats_CmdError\n"}
+{"Time":"2023-07-02T11:15:09.130223-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats_CmdError","Output":"--- PASS: Test_CoverageStats_CmdError (0.01s)\n"}
+{"Time":"2023-07-02T11:15:09.130393-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"Test_CoverageStats_CmdError","Elapsed":0.01}
+{"Time":"2023-07-02T11:15:09.13041-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"FuzzTestsFromReaders"}
+{"Time":"2023-07-02T11:15:09.130417-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzTestsFromReaders","Output":"=== RUN   FuzzTestsFromReaders\n"}
+{"Time":"2023-07-02T11:15:09.130544-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzTestsFromReaders","Output":"--- PASS: FuzzTestsFromReaders (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.130569-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"FuzzTestsFromReaders","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.130578-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders"}
+{"Time":"2023-07-02T11:15:09.130584-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders","Output":"=== RUN   FuzzPackagesTestsFromReaders\n"}
+{"Time":"2023-07-02T11:15:09.130684-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders/seed#0"}
+{"Time":"2023-07-02T11:15:09.130695-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders/seed#0","Output":"=== RUN   FuzzPackagesTestsFromReaders/seed#0\n"}
+{"Time":"2023-07-02T11:15:09.130916-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders","Output":"--- PASS: FuzzPackagesTestsFromReaders (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.130928-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders/seed#0","Output":"    --- PASS: FuzzPackagesTestsFromReaders/seed#0 (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.130946-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders/seed#0","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.130956-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"FuzzPackagesTestsFromReaders","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.130962-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"FuzzCoverFromReaders"}
+{"Time":"2023-07-02T11:15:09.130968-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzCoverFromReaders","Output":"=== RUN   FuzzCoverFromReaders\n"}
+{"Time":"2023-07-02T11:15:09.131005-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"FuzzCoverFromReaders","Output":"--- PASS: FuzzCoverFromReaders (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.13115-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"FuzzCoverFromReaders","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.131179-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"ExampleCover"}
+{"Time":"2023-07-02T11:15:09.131186-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"ExampleCover","Output":"=== RUN   ExampleCover\n"}
+{"Time":"2023-07-02T11:15:09.172886-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"ExampleCover","Output":"--- PASS: ExampleCover (0.04s)\n"}
+{"Time":"2023-07-02T11:15:09.172942-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"ExampleCover","Elapsed":0.04}
+{"Time":"2023-07-02T11:15:09.172958-04:00","Action":"run","Package":"github.com/nickfiggins/tstat","Test":"ExampleTests"}
+{"Time":"2023-07-02T11:15:09.172965-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"ExampleTests","Output":"=== RUN   ExampleTests\n"}
+{"Time":"2023-07-02T11:15:09.181236-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Test":"ExampleTests","Output":"--- PASS: ExampleTests (0.01s)\n"}
+{"Time":"2023-07-02T11:15:09.181276-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Test":"ExampleTests","Elapsed":0.01}
+{"Time":"2023-07-02T11:15:09.181287-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Output":"PASS\n"}
+{"Time":"2023-07-02T11:15:09.198687-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Output":"\tgithub.com/nickfiggins/tstat\tcoverage: 81.2% of statements\n"}
+{"Time":"2023-07-02T11:15:09.202821-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Output":"-test.shuffle 1688310909202705000\n"}
+{"Time":"2023-07-02T11:15:09.202955-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"Test_ToAction"}
+{"Time":"2023-07-02T11:15:09.202973-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"Test_ToAction","Output":"=== RUN   Test_ToAction\n"}
+{"Time":"2023-07-02T11:15:09.203062-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"Test_ToAction","Output":"--- PASS: Test_ToAction (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.203103-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"Test_ToAction","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.203122-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_IsFinal"}
+{"Time":"2023-07-02T11:15:09.203131-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_IsFinal","Output":"=== RUN   TestAction_IsFinal\n"}
+{"Time":"2023-07-02T11:15:09.203153-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_IsFinal","Output":"--- PASS: TestAction_IsFinal (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.203172-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_IsFinal","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.203181-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_String"}
+{"Time":"2023-07-02T11:15:09.203187-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_String","Output":"=== RUN   TestAction_String\n"}
+{"Time":"2023-07-02T11:15:09.203244-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_String","Output":"--- PASS: TestAction_String (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.203263-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestAction_String","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.203284-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON"}
+{"Time":"2023-07-02T11:15:09.203293-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON","Output":"=== RUN   TestReadJSON\n"}
+{"Time":"2023-07-02T11:15:09.203749-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_start,_end"}
+{"Time":"2023-07-02T11:15:09.203798-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_start,_end","Output":"=== RUN   TestReadJSON/simple_start,_end\n"}
+{"Time":"2023-07-02T11:15:09.204167-04:00","Action":"run","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_pass_and_fail"}
+{"Time":"2023-07-02T11:15:09.204186-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_pass_and_fail","Output":"=== RUN   TestReadJSON/simple_pass_and_fail\n"}
+{"Time":"2023-07-02T11:15:09.204446-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON","Output":"--- PASS: TestReadJSON (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.204464-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_start,_end","Output":"    --- PASS: TestReadJSON/simple_start,_end (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.204479-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_start,_end","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.204487-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_pass_and_fail","Output":"    --- PASS: TestReadJSON/simple_pass_and_fail (0.00s)\n"}
+{"Time":"2023-07-02T11:15:09.204495-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON/simple_pass_and_fail","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.204503-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gotest","Test":"TestReadJSON","Elapsed":0}
+{"Time":"2023-07-02T11:15:09.204509-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Output":"PASS\n"}
+{"Time":"2023-07-02T11:15:09.207435-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Output":"\tgithub.com/nickfiggins/tstat/internal/gotest\tcoverage: 89.3% of statements\n"}
+{"Time":"2023-07-02T11:15:09.22283-04:00","Action":"output","Package":"github.com/nickfiggins/tstat","Output":"ok  \tgithub.com/nickfiggins/tstat\t0.545s\tcoverage: 81.2% of statements\n"}
+{"Time":"2023-07-02T11:15:09.222854-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat","Elapsed":0.546}
+{"Time":"2023-07-02T11:15:09.228549-04:00","Action":"output","Package":"github.com/nickfiggins/tstat/internal/gotest","Output":"ok  \tgithub.com/nickfiggins/tstat/internal/gotest\t0.551s\tcoverage: 89.3% of statements\n"}
+{"Time":"2023-07-02T11:15:09.228575-04:00","Action":"pass","Package":"github.com/nickfiggins/tstat/internal/gotest","Elapsed":0.551}

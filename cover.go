@@ -1,9 +1,6 @@
 package tstat
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"sort"
 	"strings"
 
@@ -12,21 +9,12 @@ import (
 )
 
 type Coverage struct {
-	Function  *FunctionStats  `json:"function,omitempty"`
-	Statement *StatementStats `json:"statement,omitempty"`
-}
-
-func (c *Coverage) writeTo(w io.Writer) error {
-	b, err := json.Marshal(c) // TODO: write to the writer in a better format
-	if err != nil {
-		return fmt.Errorf("couldn't marshal json: %w", err)
-	}
-	_, err = w.Write(b)
-	return err
+	Function  *FunctionStats
+	Statement *StatementStats
 }
 
 type StatementStats struct {
-	CoverPct float64 `json:"coverPct,omitempty"`
+	CoverPct float64
 	fileCov  map[string]File
 }
 
@@ -42,9 +30,8 @@ func (st *StatementStats) File(f string) (File, bool) {
 }
 
 func parseProfiles(profiles []*cover.Profile, fileName func(string) string) *StatementStats {
-	cov := map[string]File{}
-	total := 0
-	covered := 0
+	cov := make(map[string]File, len(profiles))
+	total, covered := 0, 0
 	for _, prof := range profiles {
 		fileCov := parseProfile(prof)
 		file := fileName(prof.FileName)
@@ -67,6 +54,9 @@ func percent(covered, total int) float64 {
 func parseProfile(cp *cover.Profile) File {
 	stmts, coveredStmts := 0, 0
 	for _, bk := range cp.Blocks {
+		if bk.NumStmt == 0 {
+			continue
+		}
 		stmts += bk.NumStmt
 		if bk.Count > 0 {
 			coveredStmts++

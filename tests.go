@@ -3,7 +3,6 @@ package tstat
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,21 +18,26 @@ type Test struct {
 	Package  string
 }
 
-func (t *Test) Test(name string) *Test {
+func (t *Test) Test(name string) (*Test, bool) {
 	if name == t.Name {
-		return t
+		return t, true
 	}
 
-	sub, ok := findTest(name, t.Subtests...)
-	if !ok {
-		return &Test{}
-	}
-	return sub
+	return findTest(name, t.Subtests...)
 }
 
 func (t *Test) Failed() bool {
 	for _, act := range t.actions {
 		if act == gotest.Fail {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Test) Skipped() bool {
+	for _, act := range t.actions {
+		if act == gotest.Skip {
 			return true
 		}
 	}
@@ -74,36 +78,18 @@ func toTest(to gotest.Event) Test {
 	subStart := strings.LastIndex(to.Test, "/") + 1
 	return Test{
 		Subtests: make([]*Test, 0),
-		actions:  []gotest.Action{gotest.ToAction(to.Action)},
+		actions:  []gotest.Action{to.Action},
 		Name:     to.Test,
 		Package:  to.Package,
 		SubName:  to.Test[subStart:],
 	}
 }
 
-func byPackage(outputs []gotest.Event) map[string][]gotest.Event {
-	pkgs := make(map[string][]gotest.Event)
-	for _, out := range outputs {
-		if out.Package == "" {
-			continue
-		}
-		pkg, ok := pkgs[out.Package]
-		if !ok {
-			pkgs[out.Package] = append(pkgs[out.Package], out)
-			continue
-		}
-		pkg = append(pkg, out)
-		pkgs[out.Package] = pkg
-	}
-
-	return pkgs
-}
-
-func parseTestOutputs(outputs []gotest.Event) (TestRun, error) {
-	pkgTests := byPackage(outputs)
-	suite := TestRun{}
-	for name, tests := range pkgTests {
-		run, err := parsePackageTests(tests)
+func parseTestOutputs(events []gotest.Event) (TestRun, error) {
+	pkgs := gotest.ByPackage(events)
+	suite := TestRun{root: root(events)}
+	for _, pkg := range pkgs {
+		run, err := parsePackageEvents(pkg)
 		if err != nil {
 			return TestRun{}, err
 		}
@@ -114,86 +100,72 @@ func parseTestOutputs(outputs []gotest.Event) (TestRun, error) {
 		if suite.end.IsZero() || run.end.After(suite.end) {
 			suite.end = run.end
 		}
-		run.pkgName = name
+
 		suite.pkgs = append(suite.pkgs, run)
 	}
 	return suite, nil
 }
 
-func getSeed(out gotest.Event) (int64, bool) {
-	flag := "-test.shuffle"
-	idx := strings.Index(out.Output, flag)
-	if idx == -1 {
-		return 0, false
+func root(events []gotest.Event) string {
+	if len(events) == 0 {
+		return ""
 	}
-	num := strings.Trim(out.Output[idx+len(flag):], " \n")
-	n, err := strconv.ParseInt(num, 10, 64)
-	if err != nil {
-		return 0, false
+	for _, e := range events {
+		if e.Package != "" {
+			return e.Package
+		}
 	}
-	return n, true
+	return ""
 }
 
-func parsePackageTests(outputs []gotest.Event) (PackageRun, error) {
-	tmap := make(map[string]Test, 0)
-	var start, end time.Time
-	var seed int64
-	for _, out := range outputs {
-		if isPackageEvent(out) {
-			switch {
-			case isStart(out):
-				start = out.Time
-			case isEnd(out):
-				end = out.Time
-			case gotest.ToAction(out.Action) == gotest.Out:
-				if s, ok := getSeed(out); ok {
-					seed = s
-				}
-			}
-			continue
-		}
-
-		if out.Test == "" {
-			continue
-		}
-
-		test, ok := tmap[out.Test]
-		if !ok {
-			t := toTest(out)
-			tmap[out.Test] = t
-			continue
-		}
-
-		test.actions = append(test.actions, gotest.ToAction(out.Action))
-		tmap[out.Test] = test
-	}
-
-	tests := maps.Values(tmap)
-	sort.Sort(byTestName(tests))
-
-	rootTests, err := nestSubtests(tests)
+func parsePackageEvents(events *gotest.PackageEvents) (PackageRun, error) {
+	testsByName := getPackageTests(events.Events)
+	rootTests, err := nestSubtests(testsByName)
 	if err != nil {
 		return PackageRun{}, err
 	}
 
+	var start, end time.Time
+	var failed bool
+	if events.Start != nil {
+		start = events.Start.Time
+	}
+
+	if events.End != nil {
+		end = events.End.Time
+		failed = events.End.Action == gotest.Fail
+	}
+
 	return PackageRun{
-		start: start, end: end,
-		Tests: rootTests,
-		Seed:  seed,
+		pkgName: events.Package,
+		start:   start, end: end,
+		Tests:  rootTests,
+		Seed:   events.Seed,
+		failed: failed,
 	}, nil
 }
 
-// isPackageEvent returns true if the event is a package event (no test referenced in event).
-func isPackageEvent(out gotest.Event) bool {
-	return out.Test == "" && out.Package != ""
-}
+func getPackageTests(events []gotest.Event) []Test {
+	packageTests := make(map[string]Test, 0)
+	for _, out := range events {
+		if out.Test == "" {
+			continue
+		}
 
-func isEnd(out gotest.Event) bool {
-	return out.Test == "" && out.Elapsed != 0
-}
+		test, ok := packageTests[out.Test]
+		if !ok {
+			t := toTest(out)
+			packageTests[out.Test] = t
+			continue
+		}
 
-func isStart(out gotest.Event) bool {
-	return gotest.ToAction(out.Action) == gotest.Start
+		test.actions = append(test.actions, out.Action)
+		packageTests[out.Test] = test
+	}
+
+	testsByName := maps.Values(packageTests)
+	sort.Sort(byTestName(testsByName))
+	return testsByName
 }
 
 func nestSubtests(tests []Test) ([]*Test, error) {
@@ -213,19 +185,6 @@ func nestSubtests(tests []Test) ([]*Test, error) {
 	}
 
 	return maps.Values(rootTests), nil
-}
-
-func withAction(tests []*Test, action gotest.Action) []*Test {
-	sl := make([]*Test, 0)
-	for _, test := range tests {
-		for _, act := range test.actions {
-			if act == action {
-				sl = append(sl, test)
-				break
-			}
-		}
-	}
-	return sl
 }
 
 // byTestName sorts tests by their name, which ensures that all parent tests come

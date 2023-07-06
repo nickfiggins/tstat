@@ -3,18 +3,21 @@ package tstat
 import (
 	"strings"
 	"time"
-
-	"github.com/nickfiggins/tstat/internal/gotest"
 )
 
 // TestRun represents the results of a test run, which may contain multiple packages.
 type TestRun struct {
+	root       string // root is the root package of the test run
 	start, end time.Time
 	pkgs       []PackageRun
 }
 
 func (tr *TestRun) Packages() []PackageRun {
 	return tr.pkgs
+}
+
+func (tr *TestRun) Root() (PackageRun, bool) {
+	return tr.Package(tr.root)
 }
 
 // PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,
@@ -53,12 +56,8 @@ func (tr *TestRun) Failed() bool {
 	return false
 }
 
-func (pr *PackageRun) Test(name string) *Test {
-	t, ok := findTest(name, pr.Tests...)
-	if !ok {
-		return &Test{}
-	}
-	return t
+func (pr *PackageRun) Test(name string) (*Test, bool) {
+	return findTest(name, pr.Tests...)
 }
 
 func findTest(name string, tests ...*Test) (*Test, bool) {
@@ -68,7 +67,9 @@ func findTest(name string, tests ...*Test) (*Test, bool) {
 		}
 
 		if t.looksLikeSub(name) {
-			return findTest(name, t.Subtests...)
+			if sub, ok := findTest(name, t.Subtests...); ok {
+				return sub, true
+			}
 		}
 	}
 	return nil, false
@@ -79,6 +80,7 @@ type PackageRun struct {
 	start, end time.Time
 	Tests      []*Test
 	Seed       int64
+	failed     bool
 }
 
 func (pr *PackageRun) Duration() time.Duration {
@@ -95,5 +97,15 @@ func (pr *PackageRun) Count() int {
 }
 
 func (pr *PackageRun) Failed() bool {
-	return len(withAction(pr.Tests, gotest.Fail)) > 0
+	return pr.failed
+}
+
+func (pr *PackageRun) Failures() []*Test {
+	var failures []*Test
+	for _, test := range pr.Tests {
+		if test.Failed() {
+			failures = append(failures, test)
+		}
+	}
+	return failures
 }
