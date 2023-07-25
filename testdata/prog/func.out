@@ -1,0 +1,3 @@
+github.com/nickfiggins/tstat/testdata/prog/prog.go:3:	add		100.0%
+github.com/nickfiggins/tstat/testdata/prog/prog.go:7:	isOdd		0.0%
+total:							(statements)	25.0%

@@ -1,0 +1,19 @@
+version: '3'
+tasks:
+  default:
+    deps: [lint, test]
+    silent: true
+  lint:
+    cmds:
+      - golangci-lint run ./... --fix
+  test:
+    cmds: 
+      - go test ./... -race -shuffle=on -v -coverprofile=cover.out
+  cov:
+    cmds:
+    - go tool cover -html=cover.out -o cover.html
+    - go tool cover -func=cover.out -o func.out
+    - open cover.html
+  doc:
+    cmds: 
+      - godoc -http=:6060
