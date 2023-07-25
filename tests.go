@@ -10,14 +10,16 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// Test is a single test, which may have subtests.
 type Test struct {
-	Subtests []*Test
-	actions  []gotest.Action
-	Name     string
-	SubName  string
-	Package  string
+	Subtests []*Test         // Subtests is a list of subtests for this test.
+	actions  []gotest.Action // actions is a list of actions that occurred during the test.
+	Name     string          // Name is the full name of the test, including subtests.
+	SubName  string          // SubName is the name of the test, without the parent test name.
+	Package  string          // Package is the package that the test belongs to.
 }
 
+// Test returns the test with the given name. If the test name matches the current test, it will be returned.
 func (t *Test) Test(name string) (*Test, bool) {
 	if name == t.Name {
 		return t, true
@@ -26,6 +28,7 @@ func (t *Test) Test(name string) (*Test, bool) {
 	return findTest(name, t.Subtests...)
 }
 
+// Failed returns true if the test failed.
 func (t *Test) Failed() bool {
 	for _, act := range t.actions {
 		if act == gotest.Fail {
@@ -35,6 +38,7 @@ func (t *Test) Failed() bool {
 	return false
 }
 
+// Skipped returns true if the test was skipped.
 func (t *Test) Skipped() bool {
 	for _, act := range t.actions {
 		if act == gotest.Skip {
@@ -44,6 +48,7 @@ func (t *Test) Skipped() bool {
 	return false
 }
 
+// Count returns the total number of tests, including subtests.
 func (t *Test) Count() int {
 	count := 1
 	for _, sub := range t.Subtests {

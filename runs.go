@@ -12,10 +12,12 @@ type TestRun struct {
 	pkgs       []PackageRun
 }
 
+// Packages returns the packages that were run.
 func (tr *TestRun) Packages() []PackageRun {
 	return tr.pkgs
 }
 
+// Root returns the root package of the test run. If the test run was run with the -shuffle flag,
 func (tr *TestRun) Root() (PackageRun, bool) {
 	return tr.Package(tr.root)
 }
@@ -44,6 +46,7 @@ func (tr *TestRun) Count() int {
 	return count
 }
 
+// Failed returns true if any of the tests failed.
 func (tr *TestRun) Failed() bool {
 	if len(tr.pkgs) == 0 {
 		return false
@@ -56,6 +59,7 @@ func (tr *TestRun) Failed() bool {
 	return false
 }
 
+// Test is a single test, which may have subtests.
 func (pr *PackageRun) Test(name string) (*Test, bool) {
 	return findTest(name, pr.Tests...)
 }
@@ -75,6 +79,7 @@ func findTest(name string, tests ...*Test) (*Test, bool) {
 	return nil, false
 }
 
+// PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,
 type PackageRun struct {
 	pkgName    string
 	start, end time.Time
@@ -83,6 +88,7 @@ type PackageRun struct {
 	failed     bool
 }
 
+// Duration returns the duration of the test run.
 func (pr *PackageRun) Duration() time.Duration {
 	return pr.end.Sub(pr.start)
 }
@@ -96,10 +102,12 @@ func (pr *PackageRun) Count() int {
 	return count
 }
 
+// Failed returns true if any of the tests failed.
 func (pr *PackageRun) Failed() bool {
 	return pr.failed
 }
 
+// Failures returns the tests that failed.
 func (pr *PackageRun) Failures() []*Test {
 	var failures []*Test
 	for _, test := range pr.Tests {

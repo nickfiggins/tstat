@@ -8,9 +8,10 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// Coverage is the coverage statistics parsed from a single test profile.
 type Coverage struct {
-	Percent  float64 // Percent is the total percent of statements covered.
-	Packages []*PackageCoverage
+	Percent  float64            // Percent is the total percent of statements covered.
+	Packages []*PackageCoverage // Packages is the coverage of each package.
 }
 
 func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile gofunc.Output) *Coverage {
@@ -43,11 +44,13 @@ func percent(num, den int64) float64 {
 	return math.Round(float64(num)/float64(den)*1000) / 10
 }
 
+// PackageCoverage is the coverage of a package.
 type PackageCoverage struct {
-	Name  string
-	Files []*FileCoverage
+	Name  string          // Name is the name of the package.
+	Files []*FileCoverage // Files is the coverage of each file in the package.
 }
 
+// Functions returns all functions in the package.
 func (pc *PackageCoverage) Functions() []FunctionCoverage {
 	funcs := make([]FunctionCoverage, 0)
 	for _, f := range pc.Files {
@@ -86,19 +89,20 @@ func (pc *PackageCoverage) add(pkgFn *gofunc.PackageFunctions) {
 }
 
 type FileCoverage struct {
-	Name         string
-	Percent      float64 // percent
-	Functions    []FunctionCoverage
-	Stmts        int // num statments
-	CoveredStmts int
+	Name         string             // Name is the name of the file.
+	Percent      float64            // Percent is the percent of statements covered.
+	Functions    []FunctionCoverage // Functions is the coverage of each function in the file.
+	Stmts        int                // Stmts is the total number of statements in the file.
+	CoveredStmts int                // CoveredStmts is the number of statements covered in the file.
 }
 
+// FunctionCoverage is the coverage of a function.
 type FunctionCoverage struct {
-	Name     string
-	Percent  float64
-	File     string
-	Line     int
-	Internal bool
+	Name     string  // Name is the name of the function.
+	Percent  float64 // Percent is the percent of statements covered.
+	File     string  // File is the file the function is defined in.
+	Line     int     // Line is the line the function is defined on.
+	Internal bool    // Internal is true if the function is internal to the package.
 }
 
 func toFunctions(fn []gofunc.Function) []FunctionCoverage {

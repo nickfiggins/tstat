@@ -35,6 +35,8 @@ func Cover(coverProfile string, opts ...CoverOpt) (Coverage, error) {
 	return cp.Stats(bytes.NewBuffer(covOut), bytes.NewBuffer(fnOut))
 }
 
+// CoverFromReaders parses the coverage and function profiles and returns a statistics based on the profiles read.
+// If you want to generate the function profile automatically, use Cover instead.
 func CoverFromReaders(coverProfile io.Reader, fnProfile io.Reader, opts ...CoverOpt) (Coverage, error) {
 	if coverProfile == nil {
 		return Coverage{}, errors.New("cover profile must not be nil")
@@ -59,6 +61,7 @@ type CoverageParser struct {
 	funcParser  func(io.Reader) (gofunc.Output, error)
 }
 
+// NewCoverageParser returns a new CoverageParser with the given options.
 func NewCoverageParser(opts ...CoverOpt) *CoverageParser {
 	parser := &CoverageParser{
 		coverParser: func(r io.Reader) ([]*gocover.PackageStatements, error) {
@@ -105,10 +108,12 @@ func (p *CoverageParser) Stats(coverProfile, fnProfile io.Reader) (Coverage, err
 	return *coverage, nil
 }
 
+// TestParser is a parser for test output JSON.
 type TestParser struct {
 	testParser func(io.Reader) ([]gotest.Event, error)
 }
 
+// NewTestParser returns a new TestParser.
 func NewTestParser() *TestParser {
 	return &TestParser{testParser: gotest.ReadJSON}
 }
@@ -139,6 +144,7 @@ func (p *TestParser) Stats(outJSON io.Reader) (TestRun, error) {
 	return parseTestOutputs(out)
 }
 
+// runFuncCover runs `go tool cover -func=<cover profile>` and returns the output.
 func runFuncCover(profile string) ([]byte, error) {
 	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
 	cmd := exec.Command(goTool, "tool", "cover", fmt.Sprintf("-func=%v", profile))
