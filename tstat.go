@@ -110,18 +110,23 @@ func (p *CoverageParser) Stats(coverProfile, fnProfile io.Reader) (Coverage, err
 
 // TestParser is a parser for test output JSON.
 type TestParser struct {
-	testParser func(io.Reader) ([]gotest.Event, error)
+	testParser func(io.Reader) ([]*gotest.PackageEvents, error)
 }
 
 // NewTestParser returns a new TestParser.
 func NewTestParser() *TestParser {
-	return &TestParser{testParser: gotest.ReadJSON}
+	return &TestParser{testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
+		outJSON, err := gotest.ReadJSON(r)
+		if err != nil {
+			return nil, err
+		}
+		return gotest.ByPackage(outJSON), nil
+	}}
 }
 
 // TestsFromReader parses the test output JSON from a reader and returns a TestRun based on the output read.
 func TestsFromReader(outJSON io.Reader) (TestRun, error) {
-	tp := NewTestParser()
-	return tp.Stats(outJSON)
+	return NewTestParser().Stats(outJSON)
 }
 
 // Tests parses the test output JSON file and returns a TestRun based on the output read.
@@ -130,8 +135,7 @@ func Tests(outFile string) (TestRun, error) {
 	if err != nil {
 		return TestRun{}, fmt.Errorf("couldn't read file: %w", err)
 	}
-	tp := NewTestParser()
-	return tp.Stats(bytes.NewBuffer(b))
+	return NewTestParser().Stats(bytes.NewBuffer(b))
 }
 
 // Stats parses the test output and returns a TestRun based on the output read.

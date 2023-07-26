@@ -90,9 +90,8 @@ func toTest(to gotest.Event) Test {
 	}
 }
 
-func parseTestOutputs(events []gotest.Event) (TestRun, error) {
-	pkgs := gotest.ByPackage(events)
-	suite := TestRun{root: root(events)}
+func parseTestOutputs(pkgs []*gotest.PackageEvents) (TestRun, error) {
+	suite := TestRun{}
 	for _, pkg := range pkgs {
 		run, err := parsePackageEvents(pkg)
 		if err != nil {
@@ -109,18 +108,6 @@ func parseTestOutputs(events []gotest.Event) (TestRun, error) {
 		suite.pkgs = append(suite.pkgs, run)
 	}
 	return suite, nil
-}
-
-func root(events []gotest.Event) string {
-	if len(events) == 0 {
-		return ""
-	}
-	for _, e := range events {
-		if e.Package != "" {
-			return e.Package
-		}
-	}
-	return ""
 }
 
 func parsePackageEvents(events *gotest.PackageEvents) (PackageRun, error) {

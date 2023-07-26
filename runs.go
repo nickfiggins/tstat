@@ -17,7 +17,7 @@ func (tr *TestRun) Packages() []PackageRun {
 	return tr.pkgs
 }
 
-// Root returns the root package of the test run. If the test run was run with the -shuffle flag,
+// Root returns the root package of the test run. If the test run was run with the -shuffle flag,.
 func (tr *TestRun) Root() (PackageRun, bool) {
 	return tr.Package(tr.root)
 }
@@ -79,7 +79,7 @@ func findTest(name string, tests ...*Test) (*Test, bool) {
 	return nil, false
 }
 
-// PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,
+// PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,.
 type PackageRun struct {
 	pkgName    string
 	start, end time.Time

@@ -2,6 +2,7 @@ package tstat
 
 import (
 	"testing"
+	"time"
 
 	"github.com/nickfiggins/tstat/internal/gotest"
 	"github.com/stretchr/testify/assert"
@@ -9,7 +10,7 @@ import (
 
 func Test_parseTestOutputs(t *testing.T) {
 	type args struct {
-		outputs []gotest.Event
+		outputs []*gotest.PackageEvents
 	}
 	tests := []struct {
 		name    string
@@ -20,13 +21,16 @@ func Test_parseTestOutputs(t *testing.T) {
 		{
 			name: "with seed",
 			args: args{
-				outputs: []gotest.Event{
-					{Action: gotest.Start, Package: "pkg"},
-					{Action: gotest.Out, Package: "pkg", Output: "-test.shuffle 1686798048639894000\n"},
+				outputs: []*gotest.PackageEvents{
+					{
+						Package: "pkg",
+						Start:   nil, End: nil,
+						Events: []gotest.Event{},
+						Seed:   1686798048639894000,
+					},
 				},
 			},
 			want: TestRun{
-				root: "pkg",
 				pkgs: []PackageRun{
 					{
 						pkgName: "pkg",
@@ -40,14 +44,34 @@ func Test_parseTestOutputs(t *testing.T) {
 		{
 			name: "with seed",
 			args: args{
-				outputs: []gotest.Event{
-					{Action: gotest.Run, Package: "pkg", Test: "TestAdd"},
-					{Action: gotest.Out, Package: "pkg", Test: "TestAdd"},
-					{Action: gotest.Pass, Package: "pkg", Test: "TestAdd"},
+				outputs: []*gotest.PackageEvents{
+					{
+						Package: "pkg",
+						Start:   nil, End: nil,
+						Events: []gotest.Event{
+							{
+								Time:    time.Now(),
+								Action:  gotest.Run,
+								Package: "pkg",
+								Test:    "TestAdd",
+							},
+							{
+								Time:    time.Now(),
+								Action:  gotest.Out,
+								Package: "pkg",
+								Test:    "TestAdd",
+							},
+							{
+								Time:    time.Now(),
+								Action:  gotest.Pass,
+								Package: "pkg",
+								Test:    "TestAdd",
+							},
+						},
+					},
 				},
 			},
 			want: TestRun{
-				root: "pkg",
 				pkgs: []PackageRun{
 					{
 						pkgName: "pkg",
