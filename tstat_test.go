@@ -97,8 +97,8 @@ func TestParser_TestRun(t *testing.T) {
 			t.Errorf("got duration %v, want %v", gotRounded, want.duration)
 		}
 
-		r, _ := got.Root()
-		if r.Seed != want.seed {
+		pkg, _ := got.Package("github.com/google/go-cmp/cmp")
+		if pkg.Seed != want.seed {
 			t.Errorf("got seed %v, want %v", got.Packages()[0].Seed, want.seed)
 		}
 	}

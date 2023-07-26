@@ -33,13 +33,50 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		{
 			name: "happy, nested subtests",
 			parser: TestParser{
-				testParser: func(r io.Reader) ([]gotest.Event, error) {
-					return []gotest.Event{
-						{Time: time.Now(), Action: gotest.Pass, Test: "Test1", Package: "pkg"},
-						{Time: time.Now(), Action: gotest.Pass, Test: "Test2", Package: "pkg"},
-						{Time: time.Now(), Action: gotest.Pass, Test: "Test2/sub", Package: "pkg"},
-						{Time: time.Now(), Action: gotest.Pass, Test: "Test2/sub/sub2", Package: "pkg"},
-						{Time: time.Now(), Action: gotest.Pass, Test: "Test2", Package: "pkg2"},
+				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
+					return []*gotest.PackageEvents{
+						{
+							Package: "pkg",
+							Start:   nil, End: nil,
+							Events: []gotest.Event{
+								{
+									Time:    time.Now(),
+									Action:  gotest.Pass,
+									Package: "pkg",
+									Test:    "Test1",
+								},
+								{
+									Time:    time.Now(),
+									Action:  gotest.Pass,
+									Package: "pkg",
+									Test:    "Test2",
+								},
+								{
+									Time:    time.Now(),
+									Action:  gotest.Pass,
+									Package: "pkg",
+									Test:    "Test2/sub",
+								},
+								{
+									Time:    time.Now(),
+									Action:  gotest.Pass,
+									Package: "pkg",
+									Test:    "Test2/sub/sub2",
+								},
+							},
+						},
+						{
+							Package: "pkg2",
+							Start:   nil, End: nil,
+							Events: []gotest.Event{
+								{
+									Time:    time.Now(),
+									Action:  gotest.Pass,
+									Package: "pkg2",
+									Test:    "Test2",
+								},
+							},
+						},
 					}, nil
 				},
 			},
@@ -65,8 +102,8 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 		{
 			name: "error parsing tests",
 			parser: TestParser{
-				testParser: func(r io.Reader) ([]gotest.Event, error) {
-					return []gotest.Event{}, errors.New("error parsing tests")
+				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
+					return nil, errors.New("error parsing")
 				},
 			},
 			want:    []PackageRun{},

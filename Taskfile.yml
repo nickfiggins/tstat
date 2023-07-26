@@ -8,7 +8,7 @@ tasks:
       - golangci-lint run ./... --fix
   test:
     cmds: 
-      - go test ./... -race -shuffle=on -v -coverprofile=cover.out
+      - go test ./... -race -shuffle=on -coverprofile=cover.out
   cov:
     cmds:
     - go tool cover -html=cover.out -o cover.html
