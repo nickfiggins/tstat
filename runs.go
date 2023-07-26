@@ -7,7 +7,6 @@ import (
 
 // TestRun represents the results of a test run, which may contain multiple packages.
 type TestRun struct {
-	root       string // root is the root package of the test run
 	start, end time.Time
 	pkgs       []PackageRun
 }
@@ -15,11 +14,6 @@ type TestRun struct {
 // Packages returns the packages that were run.
 func (tr *TestRun) Packages() []PackageRun {
 	return tr.pkgs
-}
-
-// Root returns the root package of the test run. If the test run was run with the -shuffle flag,.
-func (tr *TestRun) Root() (PackageRun, bool) {
-	return tr.Package(tr.root)
 }
 
 // PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,
