@@ -14,3 +14,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+retract [v0.0.1, v0.0.6] // From initial project that is now archived.
