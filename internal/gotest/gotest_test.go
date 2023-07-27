@@ -78,7 +78,7 @@ func TestReadJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ReadJSON(tt.have)
+			got, err := readJSON(tt.have)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ReadJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return

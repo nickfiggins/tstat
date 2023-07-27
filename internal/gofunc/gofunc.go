@@ -11,8 +11,8 @@ import (
 )
 
 type Output struct {
-	Funcs   []Function
-	Percent float64
+	Functions []Function
+	Percent   float64
 }
 
 type Function struct {
@@ -25,7 +25,7 @@ type Function struct {
 
 const numFields = 3
 
-func Read(r io.Reader) (Output, error) {
+func readProfile(r io.Reader) (Output, error) {
 	funcs := make([]Function, 0)
 	totalPercent := float64(0)
 	sc := bufio.NewScanner(r)
@@ -76,7 +76,15 @@ func Read(r io.Reader) (Output, error) {
 		return Output{}, fmt.Errorf("error while scanning: %w", err)
 	}
 
-	return Output{Funcs: funcs, Percent: totalPercent}, nil
+	return Output{Functions: funcs, Percent: totalPercent}, nil
+}
+
+func ReadByPackage(r io.Reader) ([]*PackageFunctions, error) {
+	output, err := readProfile(r)
+	if err != nil {
+		return nil, err
+	}
+	return ByPackage(output), nil
 }
 
 type PackageFunctions struct {
@@ -105,7 +113,7 @@ type FileFunctions struct {
 
 func ByPackage(output Output) []*PackageFunctions {
 	packages := make(map[string]*PackageFunctions)
-	for _, function := range output.Funcs {
+	for _, function := range output.Functions {
 		if function.Package == "" {
 			continue
 		}

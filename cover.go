@@ -14,8 +14,7 @@ type Coverage struct {
 	Packages []*PackageCoverage // Packages is the coverage of each package.
 }
 
-func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile gofunc.Output) *Coverage {
-	fnPkgs := gofunc.ByPackage(funcProfile)
+func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile []*gofunc.PackageFunctions) *Coverage {
 	packages := make(map[string]*PackageCoverage)
 	covered, total := int64(0), int64(0)
 	for _, pkg := range coverPkgs {
@@ -24,7 +23,7 @@ func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile gofunc.Outp
 		total += pkg.Stmts
 	}
 
-	for _, pkg := range fnPkgs {
+	for _, pkg := range funcProfile {
 		pkgCov, ok := packages[pkg.Package]
 		if !ok {
 			continue

@@ -1,6 +1,7 @@
 package gocover
 
 import (
+	"io"
 	"math"
 	"strings"
 
@@ -42,6 +43,14 @@ func (fs *FileStatements) join(other *FileStatements) {
 	fs.Stmts += other.Stmts
 	fs.CoveredStmts += other.CoveredStmts
 	fs.Percent = percent(fs.Stmts, fs.CoveredStmts)
+}
+
+func ReadByPackage(r io.Reader) ([]*PackageStatements, error) {
+	profiles, err := cover.ParseProfilesFromReader(r)
+	if err != nil {
+		return nil, err
+	}
+	return ByPackage(profiles), nil
 }
 
 func ByPackage(profiles []*cover.Profile) []*PackageStatements {
