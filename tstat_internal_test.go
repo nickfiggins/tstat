@@ -83,18 +83,18 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 			want: []PackageRun{
 				{
 					Tests: []*Test{
-						{Name: "Test1", SubName: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-						{Name: "Test2", SubName: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
+						{FullName: "Test1", Name: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+						{FullName: "Test2", Name: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
 							Subtests: []*Test{{Subtests: []*Test{
-								{Name: "Test2/sub/sub2", SubName: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-							}, Name: "Test2/sub", SubName: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
+								{FullName: "Test2/sub/sub2", Name: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+							}, FullName: "Test2/sub", Name: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
 						},
 					},
 				},
 				{
 					pkgName: "pkg2",
 					Tests: []*Test{
-						{Name: "Test2", SubName: "Test2", Package: "pkg2", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+						{FullName: "Test2", Name: "Test2", Package: "pkg2", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
 					},
 				},
 			},
@@ -163,18 +163,15 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 						},
 					}, nil
 				},
-				funcParser: func(r io.Reader) (gofunc.Output, error) {
-					return gofunc.Output{
-						Percent: 20,
-					}, nil
-				},
+				funcParser: func(r io.Reader) ([]*gofunc.PackageFunctions, error) { return make([]*gofunc.PackageFunctions, 0), nil },
 			},
 			funcProfile: strings.NewReader(""),
 			want: Coverage{
 				Percent: 20,
 				Packages: []*PackageCoverage{
 					{
-						Name: "",
+						Name:    "",
+						Percent: 20,
 						Files: []*FileCoverage{
 							{
 								Name:         "prog.go",
@@ -191,7 +188,6 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 		{
 			name: "happy cov, trim module",
 			parser: CoverageParser{
-				trimModule: "github.com/mod",
 				coverParser: func(r io.Reader) ([]*gocover.PackageStatements, error) {
 					return []*gocover.PackageStatements{
 						{
@@ -205,11 +201,19 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 						},
 					}, nil
 				},
-				funcParser: func(r io.Reader) (gofunc.Output, error) {
-					return gofunc.Output{Percent: 10,
-						Funcs: []gofunc.Function{
-							{Package: "github.com/mod", File: "github.com/mod/prog.go", Line: 1, Function: "main", Percent: 10},
-						}}, nil
+				funcParser: func(r io.Reader) ([]*gofunc.PackageFunctions, error) {
+					return []*gofunc.PackageFunctions{
+						{
+							Package: "github.com/mod",
+							Files: map[string]*gofunc.FileFunctions{"github.com/mod/prog.go": {
+								File: "github.com/mod/prog.go",
+								Functions: []gofunc.Function{
+									{Package: "github.com/mod", Function: "main", Percent: 10, Line: 1, File: "github.com/mod/prog.go"},
+								},
+							}},
+						},
+					}, nil
+
 				},
 			},
 			funcProfile: strings.NewReader(""),
@@ -217,7 +221,8 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 				Percent: 20,
 				Packages: []*PackageCoverage{
 					{
-						Name: "github.com/mod",
+						Name:    "github.com/mod",
+						Percent: 20,
 						Files: []*FileCoverage{
 							{
 								Name: "github.com/mod/prog.go",
@@ -239,8 +244,8 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 				coverParser: func(r io.Reader) ([]*gocover.PackageStatements, error) {
 					return nil, errors.New("error parsing")
 				},
-				funcParser: func(r io.Reader) (gofunc.Output, error) {
-					return gofunc.Output{}, nil
+				funcParser: func(r io.Reader) ([]*gofunc.PackageFunctions, error) {
+					return make([]*gofunc.PackageFunctions, 0), nil
 				},
 			},
 			funcProfile: strings.NewReader(""),
@@ -253,8 +258,8 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 				coverParser: func(r io.Reader) ([]*gocover.PackageStatements, error) {
 					return []*gocover.PackageStatements{}, nil
 				},
-				funcParser: func(r io.Reader) (gofunc.Output, error) {
-					return gofunc.Output{}, errors.New("error parsing")
+				funcParser: func(r io.Reader) ([]*gofunc.PackageFunctions, error) {
+					return nil, errors.New("error parsing")
 				},
 			},
 			funcProfile: &errReader{},

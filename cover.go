@@ -1,10 +1,9 @@
 package tstat
 
 import (
-	"math"
-
 	"github.com/nickfiggins/tstat/internal/gocover"
 	"github.com/nickfiggins/tstat/internal/gofunc"
+	"github.com/nickfiggins/tstat/internal/mathutil"
 	"golang.org/x/exp/maps"
 )
 
@@ -14,8 +13,18 @@ type Coverage struct {
 	Packages []*PackageCoverage // Packages is the coverage of each package.
 }
 
-func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile gofunc.Output) *Coverage {
-	fnPkgs := gofunc.ByPackage(funcProfile)
+// Package returns the coverage of a single package in the run. It's a convenience method
+// for finding a file in the list of file coverages.
+func (c *Coverage) Package(name string) (*PackageCoverage, bool) {
+	for _, pkg := range c.Packages {
+		if pkg.Name == name {
+			return pkg, true
+		}
+	}
+	return nil, false
+}
+
+func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile []*gofunc.PackageFunctions) *Coverage {
 	packages := make(map[string]*PackageCoverage)
 	covered, total := int64(0), int64(0)
 	for _, pkg := range coverPkgs {
@@ -24,7 +33,7 @@ func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile gofunc.Outp
 		total += pkg.Stmts
 	}
 
-	for _, pkg := range fnPkgs {
+	for _, pkg := range funcProfile {
 		pkgCov, ok := packages[pkg.Package]
 		if !ok {
 			continue
@@ -32,22 +41,27 @@ func newCoverage(coverPkgs []*gocover.PackageStatements, funcProfile gofunc.Outp
 		pkgCov.add(pkg)
 	}
 	return &Coverage{
-		Percent:  percent(covered, total),
+		Percent:  mathutil.Percent(covered, total),
 		Packages: maps.Values(packages),
 	}
 }
 
-func percent(num, den int64) float64 {
-	if den == 0 {
-		return 0
-	}
-	return math.Round(float64(num)/float64(den)*1000) / 10
-}
-
 // PackageCoverage is the coverage of a package.
 type PackageCoverage struct {
-	Name  string          // Name is the name of the package.
-	Files []*FileCoverage // Files is the coverage of each file in the package.
+	Name    string          // Name is the name of the package.
+	Percent float64         // Percent is the percentage of statements covered in the package.
+	Files   []*FileCoverage // Files is the coverage of each file in the package.
+}
+
+// File returns the coverage of a file in the package. It's a convenience method
+// for finding a file in the list of file coverages.
+func (pc *PackageCoverage) File(name string) (*FileCoverage, bool) {
+	for _, f := range pc.Files {
+		if f.Name == name {
+			return f, true
+		}
+	}
+	return nil, false
 }
 
 // Functions returns all functions in the package.
@@ -72,8 +86,9 @@ func newPackageCoverage(stmts *gocover.PackageStatements) *PackageCoverage {
 	}
 
 	return &PackageCoverage{
-		Name:  stmts.Package,
-		Files: maps.Values(files),
+		Name:    stmts.Package,
+		Percent: mathutil.Percent(stmts.CoveredStmts, stmts.Stmts),
+		Files:   maps.Values(files),
 	}
 }
 

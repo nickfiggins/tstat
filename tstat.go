@@ -14,7 +14,6 @@ import (
 	"github.com/nickfiggins/tstat/internal/gocover"
 	"github.com/nickfiggins/tstat/internal/gofunc"
 	"github.com/nickfiggins/tstat/internal/gotest"
-	"golang.org/x/tools/cover"
 )
 
 // Cover parses the coverage and function profiles and returns a statistics based on the profiles read.
@@ -58,20 +57,14 @@ type CoverageParser struct {
 	trimModule string
 
 	coverParser func(io.Reader) ([]*gocover.PackageStatements, error)
-	funcParser  func(io.Reader) (gofunc.Output, error)
+	funcParser  func(io.Reader) ([]*gofunc.PackageFunctions, error)
 }
 
 // NewCoverageParser returns a new CoverageParser with the given options.
 func NewCoverageParser(opts ...CoverOpt) *CoverageParser {
 	parser := &CoverageParser{
-		coverParser: func(r io.Reader) ([]*gocover.PackageStatements, error) {
-			profs, err := cover.ParseProfilesFromReader(r)
-			if err != nil {
-				return nil, fmt.Errorf("couldn't parse cover profile: %w", err)
-			}
-			return gocover.ByPackage(profs), nil
-		},
-		funcParser: gofunc.Read,
+		coverParser: gocover.ReadByPackage,
+		funcParser:  gofunc.ReadByPackage,
 	}
 
 	for _, opt := range opts {
@@ -115,13 +108,7 @@ type TestParser struct {
 
 // NewTestParser returns a new TestParser.
 func NewTestParser() *TestParser {
-	return &TestParser{testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
-		outJSON, err := gotest.ReadJSON(r)
-		if err != nil {
-			return nil, err
-		}
-		return gotest.ByPackage(outJSON), nil
-	}}
+	return &TestParser{testParser: gotest.ReadByPackage}
 }
 
 // TestsFromReader parses the test output JSON from a reader and returns a TestRun based on the output read.

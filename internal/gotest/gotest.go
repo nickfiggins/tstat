@@ -9,7 +9,7 @@ import (
 	"unicode"
 )
 
-func ReadJSON(r io.Reader) ([]Event, error) {
+func readJSON(r io.Reader) ([]Event, error) {
 	sc := bufio.NewScanner(r)
 	var lines []Event
 	for sc.Scan() {
@@ -29,6 +29,14 @@ func ReadJSON(r io.Reader) ([]Event, error) {
 		return nil, fmt.Errorf("error while scanning: %w", err)
 	}
 	return lines, nil
+}
+
+func ReadByPackage(r io.Reader) ([]*PackageEvents, error) {
+	events, err := readJSON(r)
+	if err != nil {
+		return nil, err
+	}
+	return ByPackage(events), nil
 }
 
 func ByPackage(events []Event) []*PackageEvents {
