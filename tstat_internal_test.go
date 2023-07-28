@@ -83,18 +83,18 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 			want: []PackageRun{
 				{
 					Tests: []*Test{
-						{Name: "Test1", SubName: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-						{Name: "Test2", SubName: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
+						{FullName: "Test1", Name: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+						{FullName: "Test2", Name: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
 							Subtests: []*Test{{Subtests: []*Test{
-								{Name: "Test2/sub/sub2", SubName: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-							}, Name: "Test2/sub", SubName: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
+								{FullName: "Test2/sub/sub2", Name: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+							}, FullName: "Test2/sub", Name: "sub", Package: "pkg", actions: []gotest.Action{gotest.Pass}}},
 						},
 					},
 				},
 				{
 					pkgName: "pkg2",
 					Tests: []*Test{
-						{Name: "Test2", SubName: "Test2", Package: "pkg2", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
+						{FullName: "Test2", Name: "Test2", Package: "pkg2", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
 					},
 				},
 			},
@@ -170,7 +170,8 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 				Percent: 20,
 				Packages: []*PackageCoverage{
 					{
-						Name: "",
+						Name:    "",
+						Percent: 20,
 						Files: []*FileCoverage{
 							{
 								Name:         "prog.go",
@@ -220,7 +221,8 @@ func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
 				Percent: 20,
 				Packages: []*PackageCoverage{
 					{
-						Name: "github.com/mod",
+						Name:    "github.com/mod",
+						Percent: 20,
 						Files: []*FileCoverage{
 							{
 								Name: "github.com/mod/prog.go",

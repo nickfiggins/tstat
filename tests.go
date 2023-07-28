@@ -14,14 +14,14 @@ import (
 type Test struct {
 	Subtests []*Test         // Subtests is a list of subtests for this test.
 	actions  []gotest.Action // actions is a list of actions that occurred during the test.
-	Name     string          // Name is the full name of the test, including subtests.
-	SubName  string          // SubName is the name of the test, without the parent test name.
+	FullName string          // FullName is the full name of the test, including subtests.
+	Name     string          // Name is the name of the test, without the parent test name.
 	Package  string          // Package is the package that the test belongs to.
 }
 
 // Test returns the test with the given name. If the test name matches the current test, it will be returned.
 func (t *Test) Test(name string) (*Test, bool) {
-	if name == t.Name {
+	if name == t.FullName {
 		return t, true
 	}
 
@@ -59,11 +59,11 @@ func (t *Test) Count() int {
 
 // does the test name look like a sub test of the current test?
 func (t *Test) looksLikeSub(subName string) bool {
-	return strings.HasPrefix(subName+"/", t.Name)
+	return strings.HasPrefix(subName+"/", t.FullName)
 }
 
 func (t *Test) addSubtests(sub Test) {
-	trimmed := strings.TrimPrefix(sub.Name, t.Name+"/")
+	trimmed := strings.TrimPrefix(sub.FullName, t.FullName+"/")
 	remainingSubs := strings.Split(trimmed, "/")
 	if len(remainingSubs) == 1 {
 		t.Subtests = append(t.Subtests, &sub)
@@ -71,7 +71,7 @@ func (t *Test) addSubtests(sub Test) {
 	}
 
 	for _, subtest := range t.Subtests {
-		if t.looksLikeSub(subtest.Name) {
+		if t.looksLikeSub(subtest.FullName) {
 			subtest.addSubtests(sub)
 		}
 	}
@@ -84,9 +84,9 @@ func toTest(to gotest.Event) Test {
 	return Test{
 		Subtests: make([]*Test, 0),
 		actions:  []gotest.Action{to.Action},
-		Name:     to.Test,
+		FullName: to.Test,
 		Package:  to.Package,
-		SubName:  to.Test[subStart:],
+		Name:     to.Test[subStart:],
 	}
 }
 
@@ -174,16 +174,16 @@ func clean(s []string) []string {
 func nestSubtests(tests []Test) ([]*Test, error) {
 	rootTests := map[string]*Test{}
 	for _, to := range tests {
-		subs := clean(strings.Split(to.Name, "/"))
+		subs := clean(strings.Split(to.FullName, "/"))
 		switch len(subs) {
 		case 0:
 		case 1:
 			out := to
-			rootTests[to.Name] = &out
+			rootTests[to.FullName] = &out
 		default:
 			test, ok := rootTests[subs[0]]
 			if !ok && len(subs) > 1 {
-				return nil, fmt.Errorf("subtest found without corresponding parent: %v", to.Name)
+				return nil, fmt.Errorf("subtest found without corresponding parent: %v", to.FullName)
 			}
 			test.addSubtests(to)
 		}
@@ -199,5 +199,5 @@ type byTestName []Test
 func (b byTestName) Len() int      { return len(b) }
 func (b byTestName) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
 func (b byTestName) Less(i, j int) bool {
-	return b[i].Name < b[j].Name
+	return b[i].FullName < b[j].FullName
 }

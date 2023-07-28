@@ -2,9 +2,9 @@ package gocover
 
 import (
 	"io"
-	"math"
 	"strings"
 
+	"github.com/nickfiggins/tstat/internal/mathutil"
 	"golang.org/x/exp/maps"
 	"golang.org/x/tools/cover"
 )
@@ -22,7 +22,7 @@ func (ps *PackageStatements) add(prof *cover.Profile) {
 
 	ps.Stmts += fileStatements.Stmts
 	ps.CoveredStmts += fileStatements.CoveredStmts
-	ps.Percent = percent(ps.Stmts, ps.CoveredStmts)
+	ps.Percent = mathutil.Percent(ps.CoveredStmts, ps.Stmts)
 
 	file, ok := ps.Files[prof.FileName]
 	if !ok {
@@ -42,7 +42,7 @@ type FileStatements struct {
 func (fs *FileStatements) join(other *FileStatements) {
 	fs.Stmts += other.Stmts
 	fs.CoveredStmts += other.CoveredStmts
-	fs.Percent = percent(fs.Stmts, fs.CoveredStmts)
+	fs.Percent = mathutil.Percent(fs.CoveredStmts, fs.Stmts)
 }
 
 func ReadByPackage(r io.Reader) ([]*PackageStatements, error) {
@@ -95,19 +95,8 @@ func parseProfile(blocks []cover.ProfileBlock) *FileStatements {
 	}
 
 	return &FileStatements{
-		Percent:      percent(stmts, coveredStmts),
+		Percent:      mathutil.Percent(coveredStmts, stmts),
 		Stmts:        stmts,
 		CoveredStmts: coveredStmts,
 	}
-}
-
-func round(f float64) float64 {
-	return math.Round(f*10) / 10
-}
-
-func percent(den, num int64) float64 {
-	if den == 0 {
-		return 0
-	}
-	return round((float64(num) / float64(den)) * 100)
 }

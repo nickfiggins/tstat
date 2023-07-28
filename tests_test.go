@@ -77,8 +77,8 @@ func Test_parseTestOutputs(t *testing.T) {
 						pkgName: "pkg",
 						Tests: []*Test{
 							{
+								FullName: "TestAdd",
 								Name:     "TestAdd",
-								SubName:  "TestAdd",
 								Package:  "pkg",
 								Subtests: []*Test{},
 								actions:  []gotest.Action{gotest.Run, gotest.Out, gotest.Pass},

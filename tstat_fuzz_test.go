@@ -50,10 +50,10 @@ func FuzzPackagesTestsFromReaders(f *testing.F) {
 
 		for _, pkg := range tr.Packages() {
 			for _, test := range pkg.Tests {
-				if test.Name == "" {
+				if test.FullName == "" {
 					t.Fatal("test name should be defined for non-error")
 				}
-				if _, ok := pkg.Test(test.Name); !ok {
+				if _, ok := pkg.Test(test.FullName); !ok {
 					t.Fatal("test should be accessible from package")
 				}
 			}
