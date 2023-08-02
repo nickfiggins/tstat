@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Internal_TestRunFromReader(t *testing.T) {
+func Test_TestParser_Stats(t *testing.T) {
 	fileName := t.TempDir() + "/" + "test.json"
 	if _, err := os.Create(fileName); err != nil {
 		t.Fatal(err)
@@ -131,7 +131,7 @@ func Test_Internal_TestRunFromReader(t *testing.T) {
 	}
 }
 
-func Test_Internal_CoverageStatsFromReaders(t *testing.T) {
+func Test_CoverageParser_Stats(t *testing.T) {
 	fileName := t.TempDir() + "/" + "test.json"
 	if _, err := os.Create(fileName); err != nil {
 		t.Fatal(err)
