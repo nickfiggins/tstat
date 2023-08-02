@@ -8,6 +8,7 @@ import (
 
 	"github.com/nickfiggins/tstat/internal/gotest"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 // Test is a single test, which may have subtests.
@@ -17,6 +18,22 @@ type Test struct {
 	FullName string          // FullName is the full name of the test, including subtests.
 	Name     string          // Name is the name of the test, without the parent test name.
 	Package  string          // Package is the package that the test belongs to.
+
+	start, end time.Time
+}
+
+func (t Test) withEvent(event gotest.Event) Test {
+	t.actions = append(t.actions, event.Action)
+
+	switch event.Action { //nolint:exhaustive // no need to handle all actions
+	case gotest.Start:
+		t.start = event.Time
+	case gotest.Out:
+		if event.Elapsed != 0 {
+			t.end = event.Time
+		}
+	}
+	return t
 }
 
 // Test returns the test with the given name. If the test name matches the current test, it will be returned.
@@ -30,22 +47,12 @@ func (t *Test) Test(name string) (*Test, bool) {
 
 // Failed returns true if the test failed.
 func (t *Test) Failed() bool {
-	for _, act := range t.actions {
-		if act == gotest.Fail {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(t.actions, gotest.Fail)
 }
 
 // Skipped returns true if the test was skipped.
 func (t *Test) Skipped() bool {
-	for _, act := range t.actions {
-		if act == gotest.Skip {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(t.actions, gotest.Skip)
 }
 
 // Count returns the total number of tests, including subtests.
@@ -55,6 +62,10 @@ func (t *Test) Count() int {
 		count += sub.Count()
 	}
 	return count
+}
+
+func (t *Test) Duration() time.Duration {
+	return t.end.Sub(t.start)
 }
 
 // does the test name look like a sub test of the current test?
@@ -77,16 +88,16 @@ func (t *Test) addSubtests(sub Test) {
 	}
 }
 
-func toTest(to gotest.Event) Test {
+func newTest(pkg, name string) Test {
 	// add 1 to pull the part after the slash, and conveniently
 	// handle the case of no subtests as well
-	subStart := strings.LastIndex(to.Test, "/") + 1
+	subStart := strings.LastIndex(name, "/") + 1
 	return Test{
 		Subtests: make([]*Test, 0),
-		actions:  []gotest.Action{to.Action},
-		FullName: to.Test,
-		Package:  to.Package,
-		Name:     to.Test[subStart:],
+		actions:  []gotest.Action{},
+		FullName: name,
+		Package:  pkg,
+		Name:     name[subStart:],
 	}
 }
 
@@ -139,20 +150,17 @@ func parsePackageEvents(events *gotest.PackageEvents) (PackageRun, error) {
 
 func getPackageTests(events []gotest.Event) []Test {
 	packageTests := make(map[string]Test, 0)
-	for _, out := range events {
-		if out.Test == "" {
+	for _, event := range events {
+		if event.Test == "" {
 			continue
 		}
 
-		test, ok := packageTests[out.Test]
+		test, ok := packageTests[event.Test]
 		if !ok {
-			t := toTest(out)
-			packageTests[out.Test] = t
-			continue
+			test = newTest(event.Package, event.Test)
 		}
 
-		test.actions = append(test.actions, out.Action)
-		packageTests[out.Test] = test
+		packageTests[event.Test] = test.withEvent(event)
 	}
 
 	testsByName := maps.Values(packageTests)
@@ -163,10 +171,9 @@ func getPackageTests(events []gotest.Event) []Test {
 func clean(s []string) []string {
 	out := make([]string, 0)
 	for _, v := range s {
-		if v == "" {
-			continue
+		if v != "" {
+			out = append(out, v)
 		}
-		out = append(out, v)
 	}
 	return out
 }

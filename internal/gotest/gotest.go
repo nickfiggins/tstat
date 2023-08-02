@@ -69,7 +69,7 @@ type PackageEvents struct {
 }
 
 func (pe *PackageEvents) Add(e Event) {
-	if pe.Start == nil && e.Action == Start {
+	if pe.Start == nil && e.Action == Start && e.Test == "" {
 		pe.Start = &e
 	}
 

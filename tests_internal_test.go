@@ -50,16 +50,23 @@ func Test_parseTestOutputs(t *testing.T) {
 						Start:   nil, End: nil,
 						Events: []gotest.Event{
 							{
+								Time:    time.Time{}.Add(1 * time.Minute),
+								Action:  gotest.Start,
+								Package: "pkg",
+								Test:    "TestAdd",
+							},
+							{
 								Time:    time.Now(),
 								Action:  gotest.Run,
 								Package: "pkg",
 								Test:    "TestAdd",
 							},
 							{
-								Time:    time.Now(),
+								Time:    time.Time{}.Add(2 * time.Minute),
 								Action:  gotest.Out,
 								Package: "pkg",
 								Test:    "TestAdd",
+								Elapsed: 1,
 							},
 							{
 								Time:    time.Now(),
@@ -81,7 +88,9 @@ func Test_parseTestOutputs(t *testing.T) {
 								Name:     "TestAdd",
 								Package:  "pkg",
 								Subtests: []*Test{},
-								actions:  []gotest.Action{gotest.Run, gotest.Out, gotest.Pass},
+								actions:  []gotest.Action{gotest.Start, gotest.Run, gotest.Out, gotest.Pass},
+								start:    time.Time{}.Add(1 * time.Minute),
+								end:      time.Time{}.Add(2 * time.Minute),
 							},
 						},
 					},

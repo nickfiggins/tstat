@@ -11,7 +11,7 @@ import (
 	"github.com/nickfiggins/tstat"
 )
 
-func Test_CoverageStats(t *testing.T) {
+func Test_Cover(t *testing.T) {
 	tests := []struct {
 		name, covFile string
 		wantPercent   float64
@@ -38,7 +38,7 @@ func Test_CoverageStats(t *testing.T) {
 	}
 }
 
-func Test_CoverageStats_CmdError(t *testing.T) {
+func Test_Cover_CmdError(t *testing.T) {
 	t.Setenv("GOROOT", "bad go root")
 	testDir := "testdata/"
 	covFile := "prog/cover.out"
@@ -50,7 +50,7 @@ func Test_CoverageStats_CmdError(t *testing.T) {
 	}
 }
 
-func Test_CoverageStatsFromReaders(t *testing.T) {
+func Test_CoverFromReaders(t *testing.T) {
 	testDir := "testdata/"
 	tests := []struct {
 		name, covFile, funcFile string
@@ -77,7 +77,7 @@ func Test_CoverageStatsFromReaders(t *testing.T) {
 	}
 }
 
-func TestParser_TestRun(t *testing.T) {
+func Test_Tests(t *testing.T) {
 	type want struct {
 		count    int
 		failed   bool
