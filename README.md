@@ -3,6 +3,10 @@
 Tstat provides information on Go test suites and functionality to make it easier to
 query for information on code coverage or test cases.
 
+For tests, it leverages the JSON output provides by `go test` when running with the `-json` flag. See [here](https://pkg.go.dev/cmd/go/internal/test) for more info.
+
+For coverage, it leverages the cover profiles for statements and function coverage provided by the `cover` tool. See [cover](https://pkg.go.dev/cmd/cover) for more info.
+
 ## Usage
 
 ### Coverage
