@@ -57,9 +57,9 @@ func (t *Test) Count() int {
 	return count
 }
 
-// does the test name look like a sub test of the current test?
+// does the subName look like a sub test of the current test?
 func (t *Test) looksLikeSub(subName string) bool {
-	return strings.HasPrefix(subName+"/", t.FullName)
+	return strings.HasPrefix(subName, t.FullName+"/")
 }
 
 func (t *Test) addSubtests(sub Test) {
@@ -71,10 +71,13 @@ func (t *Test) addSubtests(sub Test) {
 	}
 
 	for _, subtest := range t.Subtests {
-		if t.looksLikeSub(subtest.FullName) {
+		if subtest.looksLikeSub(sub.FullName) {
 			subtest.addSubtests(sub)
+			return
 		}
 	}
+
+	t.Subtests = append(t.Subtests, &sub)
 }
 
 func toTest(to gotest.Event) Test {
