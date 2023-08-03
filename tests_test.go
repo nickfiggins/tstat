@@ -234,3 +234,39 @@ func TestTest_addSubtests(t *testing.T) {
 		})
 	}
 }
+
+func TestTest_looksLikeSub(t *testing.T) {
+	tests := []struct {
+		name       string
+		parentName string
+		subName    string
+		want       bool
+	}{
+		{
+			name:       "simple",
+			parentName: "TestAdd",
+			subName:    "TestAdd/sub",
+			want:       true,
+		},
+		{
+			name:       "nested",
+			parentName: "TestAdd",
+			subName:    "TestAdd/sub/sub3",
+			want:       true,
+		},
+		{
+			name:       "not sub",
+			parentName: "TestAdd",
+			subName:    "TestAdd2",
+			want:       false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := &Test{FullName: tt.parentName}
+			if got := tr.looksLikeSub(tt.subName); got != tt.want {
+				t.Errorf("Test.looksLikeSub() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
