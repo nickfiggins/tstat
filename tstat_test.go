@@ -125,8 +125,14 @@ func Test_Tests(t *testing.T) {
 	}{
 		{
 			testFile: "testdata/bigtest.json",
-			want:     want{50, false, 473 * time.Millisecond, []wantPackage{}},
-			wantErr:  false,
+			want: want{50, false, 473 * time.Millisecond, []wantPackage{
+				{
+					name:  "github.com/nickfiggins/tstat",
+					seed:  0,
+					tests: 18,
+				},
+			}},
+			wantErr: false,
 		},
 		{
 			testFile: "testdata/go-cmp/go-cmp.json",
