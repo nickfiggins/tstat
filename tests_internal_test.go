@@ -19,7 +19,7 @@ func Test_parseTestOutputs(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "with seed",
+			name: "empty, with seed",
 			args: args{
 				outputs: []*gotest.PackageEvents{
 					{
@@ -42,7 +42,7 @@ func Test_parseTestOutputs(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "with seed",
+			name: "single test",
 			args: args{
 				outputs: []*gotest.PackageEvents{
 					{

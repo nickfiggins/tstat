@@ -64,6 +64,7 @@ func (t *Test) Count() int {
 	return count
 }
 
+// Duration returns the total duration of the test, including subtests.
 func (t *Test) Duration() time.Duration {
 	return t.end.Sub(t.start)
 }
@@ -122,8 +123,7 @@ func parseTestOutputs(pkgs []*gotest.PackageEvents) (TestRun, error) {
 }
 
 func parsePackageEvents(events *gotest.PackageEvents) (PackageRun, error) {
-	testsByName := getPackageTests(events.Events)
-	rootTests, err := nestSubtests(testsByName)
+	packageTests, err := getPackageTests(events.Events)
 	if err != nil {
 		return PackageRun{}, err
 	}
@@ -142,13 +142,13 @@ func parsePackageEvents(events *gotest.PackageEvents) (PackageRun, error) {
 	return PackageRun{
 		pkgName: events.Package,
 		start:   start, end: end,
-		Tests:  rootTests,
+		Tests:  packageTests,
 		Seed:   events.Seed,
 		failed: failed,
 	}, nil
 }
 
-func getPackageTests(events []gotest.Event) []Test {
+func getPackageTests(events []gotest.Event) ([]*Test, error) {
 	packageTests := make(map[string]Test, 0)
 	for _, event := range events {
 		if event.Test == "" {
@@ -165,7 +165,12 @@ func getPackageTests(events []gotest.Event) []Test {
 
 	testsByName := maps.Values(packageTests)
 	sort.Sort(byTestName(testsByName))
-	return testsByName
+
+	rootTests, err := nestSubtests(testsByName)
+	if err != nil {
+		return nil, err
+	}
+	return rootTests, nil
 }
 
 func clean(s []string) []string {

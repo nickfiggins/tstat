@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -162,9 +161,7 @@ func TestByPackage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ByPackage(tt.args.events)
-			if !cmp.Equal(tt.want, got) {
-				t.Errorf("ByPackage() mismatch (-want, +got): %v", cmp.Diff(got, tt.want))
-			}
+			assert.ElementsMatch(t, tt.want, got)
 		})
 	}
 }

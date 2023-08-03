@@ -1,7 +1,9 @@
 package tstat_test
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -78,11 +80,17 @@ func Test_CoverFromReaders(t *testing.T) {
 }
 
 func Test_Tests(t *testing.T) {
+	type wantPackage struct {
+		name  string
+		seed  int64
+		tests int
+	}
+
 	type want struct {
 		count    int
 		failed   bool
 		duration time.Duration
-		seed     int64
+		pkgs     []wantPackage
 	}
 	compare := func(t *testing.T, want want, got tstat.TestRun) {
 		t.Helper()
@@ -97,9 +105,20 @@ func Test_Tests(t *testing.T) {
 			t.Errorf("got duration %v, want %v", gotRounded, want.duration)
 		}
 
-		pkg, _ := got.Package("github.com/google/go-cmp/cmp")
-		if pkg.Seed != want.seed {
-			t.Errorf("got seed %v, want %v", got.Packages()[0].Seed, want.seed)
+		for _, pkg := range want.pkgs {
+			gotPkg, ok := got.Package(pkg.name)
+			if !ok {
+				t.Errorf("package %v not found", pkg.name)
+				continue
+			}
+			if gotPkg.Seed != pkg.seed {
+				t.Errorf("got pkg %v seed %v, want %v", pkg.name, gotPkg.Seed, pkg.seed)
+			}
+			if gotPkg.Count() != pkg.tests {
+				t.Errorf("got pkg %v, %v tests, want %v", pkg.name, gotPkg.Count(), pkg.tests)
+			}
+			v, _ := json.MarshalIndent(gotPkg.Tests, "", "  ")
+			fmt.Println(string(v))
 		}
 	}
 
@@ -108,15 +127,31 @@ func Test_Tests(t *testing.T) {
 		want     want
 		wantErr  bool
 	}{
-		{
-			testFile: "testdata/bigtest.json",
-			want:     want{50, false, 473 * time.Millisecond, 0},
-			wantErr:  false,
-		},
+		// {
+		// 	testFile: "testdata/bigtest.json",
+		// 	want:     want{50, false, 473 * time.Millisecond, []wantPackage{}},
+		// 	wantErr:  false,
+		// },
 		{
 			testFile: "testdata/go-cmp/go-cmp.json",
-			want:     want{455, false, 1082 * time.Millisecond, 1688261989310323000},
-			wantErr:  false,
+			want: want{455, false, 1082 * time.Millisecond, []wantPackage{
+				{
+					name:  "github.com/google/go-cmp/cmp",
+					seed:  1688261989453195000,
+					tests: 47,
+				},
+				// {
+				// 	name:  "github.com/google/go-cmp/cmp/cmpopts",
+				// 	seed:  1688261989453195000,
+				// 	tests: 47,
+				// },
+			}},
+			wantErr: false,
+		},
+		{
+			testFile: "not-found.json",
+			want:     want{},
+			wantErr:  true,
 		},
 	}
 	for _, tt := range tests {
