@@ -17,19 +17,25 @@ import (
 func Test_TestParser_Stats(t *testing.T) {
 	firstPkg := PackageRun{
 		pkgName: "pkg",
-		start:   time.Time{}.Add(1 * time.Hour),
-		end:     time.Time{}.Add(2 * time.Hour),
+		start:   zeroPlus(2),
+		end:     zeroPlus(3),
 		Tests: []*Test{
 			{Subtests: []*Test{}, actions: []gotest.Action{gotest.Run, gotest.Pass}, Name: "Test", Package: "pkg", FullName: "Test"},
 		},
 	}
 	secondPkg := PackageRun{
 		pkgName: "pkg2",
-		start:   time.Time{}.Add(2 * time.Hour),
-		end:     time.Time{}.Add(3 * time.Hour),
+		start:   zeroPlus(3),
+		end:     zeroPlus(4),
 		Tests: []*Test{
 			{Subtests: []*Test{}, actions: []gotest.Action{gotest.Run, gotest.Pass}, Name: "Test", Package: "pkg2", FullName: "Test"},
 		},
+	}
+	thirdPkg := PackageRun{
+		pkgName: "pkg3",
+		start:   zeroPlus(1),
+		end:     zeroPlus(3),
+		Tests:   []*Test{},
 	}
 	tests := []struct {
 		name    string
@@ -51,9 +57,31 @@ func Test_TestParser_Stats(t *testing.T) {
 				},
 			},
 			want: TestRun{
-				start: time.Time{}.Add(1 * time.Hour), // from first package
-				end:   time.Time{}.Add(3 * time.Hour), // from second package
+				start: zeroPlus(2), // from first package
+				end:   zeroPlus(4), // from second package
 				pkgs:  []PackageRun{firstPkg, secondPkg},
+			},
+		},
+		{
+			name: "happy, last package started first",
+			parser: TestParser{
+				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
+					return []*gotest.PackageEvents{{Package: "pkg"}, {Package: "pkg2"}, {Package: "pkg3"}}, nil
+				},
+				converter: func(pkg *gotest.PackageEvents) (PackageRun, error) {
+					if pkg.Package == "pkg" {
+						return firstPkg, nil
+					}
+					if pkg.Package == "pkg2" {
+						return secondPkg, nil
+					}
+					return thirdPkg, nil
+				},
+			},
+			want: TestRun{
+				start: zeroPlus(1), // from third package
+				end:   zeroPlus(4), // from second package
+				pkgs:  []PackageRun{firstPkg, secondPkg, thirdPkg},
 			},
 		},
 		{
@@ -97,6 +125,11 @@ func Test_TestParser_Stats(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// zeroPlus returns a zero time with the given number of hours added
+func zeroPlus(num int) time.Time {
+	return time.Time{}.Add(time.Duration(num) * time.Hour)
 }
 
 func Test_CoverageParser_Stats(t *testing.T) {
