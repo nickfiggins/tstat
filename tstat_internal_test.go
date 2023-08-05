@@ -39,80 +39,27 @@ func Test_TestParser_Stats(t *testing.T) {
 							Package: "pkg",
 							Start:   nil, End: nil,
 							Events: []gotest.Event{
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test1",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub/sub2",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub3/sub4",
-								},
+								{Time: time.Now(), Action: gotest.Pass, Package: "pkg", Test: "Test1"},
 							},
 						},
 						{
 							Package: "pkg2",
 							Start:   nil, End: nil,
 							Events: []gotest.Event{
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg2",
-									Test:    "Test2",
-								},
+								{Time: time.Now(), Action: gotest.Pass, Package: "pkg2", Test: "Test2"},
 							},
 						},
 					}, nil
 				},
+				testConverter: &mockConverter{
+					mockFn: func(pkg *gotest.PackageEvents) (PackageRun, error) {
+						return PackageRun{pkgName: pkg.Package}, nil
+					},
+				},
 			},
 			want: []PackageRun{
-				{
-					Tests: []*Test{
-						{FullName: "Test1", Name: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-						{FullName: "Test2", Name: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
-							Subtests: []*Test{
-								{
-									FullName: "Test2/sub", Name: "sub", Package: "pkg",
-									actions: []gotest.Action{gotest.Pass},
-									Subtests: []*Test{
-										{FullName: "Test2/sub/sub2", Name: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-									},
-								},
-								{
-									FullName: "Test2/sub3/sub4", Name: "sub4", Package: "pkg",
-									Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass},
-								},
-							},
-						},
-					},
-				},
-				{
-					pkgName: "pkg2",
-					Tests: []*Test{
-						{FullName: "Test2", Name: "Test2", Package: "pkg2", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-					},
-				},
+				{pkgName: "pkg"},
+				{pkgName: "pkg2"},
 			},
 		},
 		{
@@ -124,47 +71,6 @@ func Test_TestParser_Stats(t *testing.T) {
 			},
 			want:    []PackageRun{},
 			wantErr: true,
-		},
-		{
-			name: "test with / in name but isn't a subtest is not nested",
-			parser: TestParser{
-				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
-					return []*gotest.PackageEvents{
-						{
-							Package: "pkg",
-							Start:   nil, End: nil,
-							Events: []gotest.Event{
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub3/sub4",
-								},
-							},
-						},
-					}, nil
-				},
-			},
-			want: []PackageRun{
-				{
-					Tests: []*Test{
-						{FullName: "Test2", Name: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
-							Subtests: []*Test{
-								{
-									FullName: "Test2/sub3/sub4", Name: "sub4", Package: "pkg",
-									Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass},
-								},
-							},
-						},
-					},
-				},
-			},
 		},
 	}
 	for _, tt := range tests {
