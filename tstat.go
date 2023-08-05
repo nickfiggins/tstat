@@ -146,11 +146,11 @@ func (tp *TestParser) parseTestOutputs(pkgs []*gotest.PackageEvents) (TestRun, e
 		if err != nil {
 			return TestRun{}, err
 		}
-		if suite.start.IsZero() || run.start.Before(suite.start) {
+		if suite.start.IsZero() || (!run.start.IsZero() && run.start.Before(suite.start)) {
 			suite.start = run.start
 		}
 
-		if suite.end.IsZero() || run.end.After(suite.end) {
+		if suite.end.IsZero() || (!run.end.IsZero() && run.end.After(suite.end)) {
 			suite.end = run.end
 		}
 

@@ -3,7 +3,6 @@ package tstat
 import (
 	"errors"
 	"io"
-	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -16,48 +15,45 @@ import (
 )
 
 func Test_TestParser_Stats(t *testing.T) {
-	fileName := t.TempDir() + "/" + "test.json"
-	if _, err := os.Create(fileName); err != nil {
-		t.Fatal(err)
+	firstPkg := PackageRun{
+		pkgName: "pkg",
+		start:   time.Time{}.Add(1 * time.Hour),
+		end:     time.Time{}.Add(2 * time.Hour),
+		Tests: []*Test{
+			{Subtests: []*Test{}, actions: []gotest.Action{gotest.Run, gotest.Pass}, Name: "Test", Package: "pkg", FullName: "Test"},
+		},
 	}
-	testFile, err := os.Open(fileName)
-	if err != nil {
-		t.Fatal(err)
+	secondPkg := PackageRun{
+		pkgName: "pkg2",
+		start:   time.Time{}.Add(2 * time.Hour),
+		end:     time.Time{}.Add(3 * time.Hour),
+		Tests: []*Test{
+			{Subtests: []*Test{}, actions: []gotest.Action{gotest.Run, gotest.Pass}, Name: "Test", Package: "pkg2", FullName: "Test"},
+		},
 	}
 	tests := []struct {
 		name    string
 		parser  TestParser
-		want    []PackageRun
+		want    TestRun
 		wantErr bool
 	}{
 		{
-			name: "happy, nested subtests",
+			name: "happy",
 			parser: TestParser{
 				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
-					return []*gotest.PackageEvents{
-						{
-							Package: "pkg",
-							Start:   nil, End: nil,
-							Events: []gotest.Event{
-								{Time: time.Now(), Action: gotest.Pass, Package: "pkg", Test: "Test1"},
-							},
-						},
-						{
-							Package: "pkg2",
-							Start:   nil, End: nil,
-							Events: []gotest.Event{
-								{Time: time.Now(), Action: gotest.Pass, Package: "pkg2", Test: "Test2"},
-							},
-						},
-					}, nil
+					return []*gotest.PackageEvents{{Package: "pkg"}, {Package: "pkg2"}}, nil
 				},
 				converter: func(pkg *gotest.PackageEvents) (PackageRun, error) {
-					return PackageRun{pkgName: pkg.Package}, nil
+					if pkg.Package == "pkg" {
+						return firstPkg, nil
+					}
+					return secondPkg, nil
 				},
 			},
-			want: []PackageRun{
-				{pkgName: "pkg"},
-				{pkgName: "pkg2"},
+			want: TestRun{
+				start: time.Time{}.Add(1 * time.Hour), // from first package
+				end:   time.Time{}.Add(3 * time.Hour), // from second package
+				pkgs:  []PackageRun{firstPkg, secondPkg},
 			},
 		},
 		{
@@ -67,40 +63,43 @@ func Test_TestParser_Stats(t *testing.T) {
 					return nil, errors.New("error parsing")
 				},
 			},
-			want:    []PackageRun{},
+			want:    TestRun{},
+			wantErr: true,
+		},
+		{
+			name: "error converting",
+			parser: TestParser{
+				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
+					return []*gotest.PackageEvents{{Package: "pkg"}}, nil
+				},
+				converter: func(pkg *gotest.PackageEvents) (PackageRun, error) {
+					return PackageRun{}, errors.New("error converting")
+				},
+			},
+			want:    TestRun{},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cp := tt.parser
-			got, err := cp.Stats(testFile)
+			got, err := cp.Stats(strings.NewReader(""))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Stats() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			sort.Slice(tt.want, func(i, j int) bool {
-				return tt.want[i].pkgName > tt.want[j].pkgName
+			sort.Slice(tt.want.pkgs, func(i, j int) bool {
+				return tt.want.pkgs[i].pkgName > tt.want.pkgs[j].pkgName
 			})
 			sort.Slice(got.pkgs, func(i, j int) bool {
 				return got.pkgs[i].pkgName > got.pkgs[j].pkgName
 			})
-			for i, p := range tt.want {
-				assert.ElementsMatch(t, p.Tests, got.pkgs[i].Tests)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func Test_CoverageParser_Stats(t *testing.T) {
-	fileName := t.TempDir() + "/" + "test.json"
-	if _, err := os.Create(fileName); err != nil {
-		t.Fatal(err)
-	}
-	testFile, err := os.Open(fileName)
-	if err != nil {
-		t.Fatal(err)
-	}
 	tests := []struct {
 		name        string
 		funcProfile io.Reader
@@ -230,7 +229,7 @@ func Test_CoverageParser_Stats(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.parser.Stats(testFile, tt.funcProfile)
+			got, err := tt.parser.Stats(strings.NewReader(""), tt.funcProfile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
