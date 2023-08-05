@@ -10,20 +10,12 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-// eventConverter converts a gotest.PackageEvents into a PackageRun.
-type eventConverter struct {
-	delim string // delim is the delimiter used to split test names into subtests.
-}
+const testDelim = "/"
 
-func newEventConverter() *eventConverter {
-	return &eventConverter{
-		delim: "/",
-	}
-}
-
-func (e *eventConverter) convert(pkg *gotest.PackageEvents) (PackageRun, error) {
-	tests := e.getPackageTests(pkg.Events)
-	nested, err := e.nestSubtests(tests)
+// convertTests converts a gotest.PackageEvents into a PackageRun.
+func convertEvents(pkg *gotest.PackageEvents) (PackageRun, error) {
+	tests := getPackageTests(pkg.Events)
+	nested, err := nestSubtests(tests)
 	if err != nil {
 		return PackageRun{}, err
 	}
@@ -48,7 +40,7 @@ func (e *eventConverter) convert(pkg *gotest.PackageEvents) (PackageRun, error) 
 	}, nil
 }
 
-func (e *eventConverter) getPackageTests(events []gotest.Event) []*Test {
+func getPackageTests(events []gotest.Event) []*Test {
 	packageTests := make(map[string]*Test, 0)
 	for _, out := range events {
 		if out.Test == "" {
@@ -57,7 +49,7 @@ func (e *eventConverter) getPackageTests(events []gotest.Event) []*Test {
 
 		test, ok := packageTests[out.Test]
 		if !ok {
-			t := e.toTest(out)
+			t := toTest(out)
 			packageTests[out.Test] = &t
 			continue
 		}
@@ -71,10 +63,10 @@ func (e *eventConverter) getPackageTests(events []gotest.Event) []*Test {
 	return testsByName
 }
 
-func (e *eventConverter) toTest(to gotest.Event) Test {
+func toTest(to gotest.Event) Test {
 	// add 1 to pull the part after the slash, and conveniently
 	// handle the case of no subtests as well
-	subStart := strings.LastIndex(to.Test, e.delim) + 1
+	subStart := strings.LastIndex(to.Test, testDelim) + 1
 	return Test{
 		Subtests: make([]*Test, 0),
 		actions:  []gotest.Action{to.Action},
@@ -86,10 +78,10 @@ func (e *eventConverter) toTest(to gotest.Event) Test {
 
 // nestSubtests takes a list of tests and nests subtests under their parent.
 // It returns a list of root tests.
-func (e *eventConverter) nestSubtests(tests []*Test) ([]*Test, error) {
+func nestSubtests(tests []*Test) ([]*Test, error) {
 	rootTests := map[string]*Test{}
 	for _, to := range tests {
-		subs := removeEmpty(strings.Split(to.FullName, e.delim))
+		subs := removeEmpty(strings.Split(to.FullName, testDelim))
 		subDepth := len(subs)
 		if subDepth == 1 { // root test; no subtests
 			out := to

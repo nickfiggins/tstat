@@ -7,14 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockConverter struct {
-	mockFn func(pkg *gotest.PackageEvents) (PackageRun, error)
-}
-
-func (m *mockConverter) convert(pkg *gotest.PackageEvents) (PackageRun, error) {
-	return m.mockFn(pkg)
-}
-
 func TestTest_addSubtests(t *testing.T) {
 	type fields struct {
 		Subtests []*Test

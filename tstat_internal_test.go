@@ -51,10 +51,8 @@ func Test_TestParser_Stats(t *testing.T) {
 						},
 					}, nil
 				},
-				testConverter: &mockConverter{
-					mockFn: func(pkg *gotest.PackageEvents) (PackageRun, error) {
-						return PackageRun{pkgName: pkg.Package}, nil
-					},
+				converter: func(pkg *gotest.PackageEvents) (PackageRun, error) {
+					return PackageRun{pkgName: pkg.Package}, nil
 				},
 			},
 			want: []PackageRun{

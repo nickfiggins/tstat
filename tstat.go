@@ -101,20 +101,18 @@ func (p *CoverageParser) Stats(coverProfile, fnProfile io.Reader) (Coverage, err
 	return *coverage, nil
 }
 
-// testConverter converts a gotest.PackageEvents to a PackageRun.
-type testConverter interface {
-	convert(pkg *gotest.PackageEvents) (PackageRun, error)
-}
+// eventConverter converts a gotest.PackageEvents to a PackageRun.
+type eventConverter func(pkg *gotest.PackageEvents) (PackageRun, error)
 
 // TestParser is a parser for test output JSON.
 type TestParser struct {
-	testParser    func(io.Reader) ([]*gotest.PackageEvents, error)
-	testConverter testConverter
+	testParser func(io.Reader) ([]*gotest.PackageEvents, error)
+	converter  eventConverter
 }
 
 // NewTestParser returns a new TestParser.
 func NewTestParser() *TestParser {
-	return &TestParser{testParser: gotest.ReadByPackage, testConverter: newEventConverter()}
+	return &TestParser{testParser: gotest.ReadByPackage, converter: convertEvents}
 }
 
 // TestsFromReader parses the test output JSON from a reader and returns a TestRun based on the output read.
@@ -144,7 +142,7 @@ func (tp *TestParser) Stats(outJSON io.Reader) (TestRun, error) {
 func (tp *TestParser) parseTestOutputs(pkgs []*gotest.PackageEvents) (TestRun, error) {
 	suite := TestRun{}
 	for _, pkg := range pkgs {
-		run, err := tp.testConverter.convert(pkg)
+		run, err := tp.converter(pkg)
 		if err != nil {
 			return TestRun{}, err
 		}
