@@ -3,7 +3,6 @@ package tstat
 import (
 	"errors"
 	"io"
-	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -16,103 +15,73 @@ import (
 )
 
 func Test_TestParser_Stats(t *testing.T) {
-	fileName := t.TempDir() + "/" + "test.json"
-	if _, err := os.Create(fileName); err != nil {
-		t.Fatal(err)
+	firstPkg := PackageRun{
+		pkgName: "pkg",
+		start:   zeroPlus(2),
+		end:     zeroPlus(3),
+		Tests: []*Test{
+			{Subtests: []*Test{}, actions: []gotest.Action{gotest.Run, gotest.Pass}, Name: "Test", Package: "pkg", FullName: "Test"},
+		},
 	}
-	testFile, err := os.Open(fileName)
-	if err != nil {
-		t.Fatal(err)
+	secondPkg := PackageRun{
+		pkgName: "pkg2",
+		start:   zeroPlus(3),
+		end:     zeroPlus(4),
+		Tests: []*Test{
+			{Subtests: []*Test{}, actions: []gotest.Action{gotest.Run, gotest.Pass}, Name: "Test", Package: "pkg2", FullName: "Test"},
+		},
+	}
+	thirdPkg := PackageRun{
+		pkgName: "pkg3",
+		start:   zeroPlus(1),
+		end:     zeroPlus(3),
+		Tests:   []*Test{},
 	}
 	tests := []struct {
 		name    string
 		parser  TestParser
-		want    []PackageRun
+		want    TestRun
 		wantErr bool
 	}{
 		{
-			name: "happy, nested subtests",
+			name: "happy",
 			parser: TestParser{
 				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
-					return []*gotest.PackageEvents{
-						{
-							Package: "pkg",
-							Start:   nil, End: nil,
-							Events: []gotest.Event{
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test1",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub/sub2",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub3/sub4",
-								},
-							},
-						},
-						{
-							Package: "pkg2",
-							Start:   nil, End: nil,
-							Events: []gotest.Event{
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg2",
-									Test:    "Test2",
-								},
-							},
-						},
-					}, nil
+					return []*gotest.PackageEvents{{Package: "pkg"}, {Package: "pkg2"}}, nil
+				},
+				converter: func(pkg *gotest.PackageEvents) (PackageRun, error) {
+					if pkg.Package == "pkg" {
+						return firstPkg, nil
+					}
+					return secondPkg, nil
 				},
 			},
-			want: []PackageRun{
-				{
-					Tests: []*Test{
-						{FullName: "Test1", Name: "Test1", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-						{FullName: "Test2", Name: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
-							Subtests: []*Test{
-								{
-									FullName: "Test2/sub", Name: "sub", Package: "pkg",
-									actions: []gotest.Action{gotest.Pass},
-									Subtests: []*Test{
-										{FullName: "Test2/sub/sub2", Name: "sub2", Package: "pkg", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-									},
-								},
-								{
-									FullName: "Test2/sub3/sub4", Name: "sub4", Package: "pkg",
-									Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass},
-								},
-							},
-						},
-					},
+			want: TestRun{
+				start: zeroPlus(2), // from first package
+				end:   zeroPlus(4), // from second package
+				pkgs:  []PackageRun{firstPkg, secondPkg},
+			},
+		},
+		{
+			name: "happy, last package started first",
+			parser: TestParser{
+				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
+					return []*gotest.PackageEvents{{Package: "pkg"}, {Package: "pkg2"}, {Package: "pkg3"}}, nil
 				},
-				{
-					pkgName: "pkg2",
-					Tests: []*Test{
-						{FullName: "Test2", Name: "Test2", Package: "pkg2", Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass}},
-					},
+				converter: func(pkg *gotest.PackageEvents) (PackageRun, error) {
+					if pkg.Package == "pkg" {
+						return firstPkg, nil
+					}
+					if pkg.Package == "pkg2" {
+						return secondPkg, nil
+					}
+					return thirdPkg, nil
 				},
+			},
+			want: TestRun{
+				start: zeroPlus(1), // from third package
+				end:   zeroPlus(4), // from second package
+				pkgs:  []PackageRun{firstPkg, secondPkg, thirdPkg},
 			},
 		},
 		{
@@ -122,81 +91,48 @@ func Test_TestParser_Stats(t *testing.T) {
 					return nil, errors.New("error parsing")
 				},
 			},
-			want:    []PackageRun{},
+			want:    TestRun{},
 			wantErr: true,
 		},
 		{
-			name: "test with / in name but isn't a subtest is not nested",
+			name: "error converting",
 			parser: TestParser{
 				testParser: func(r io.Reader) ([]*gotest.PackageEvents, error) {
-					return []*gotest.PackageEvents{
-						{
-							Package: "pkg",
-							Start:   nil, End: nil,
-							Events: []gotest.Event{
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2",
-								},
-								{
-									Time:    time.Now(),
-									Action:  gotest.Pass,
-									Package: "pkg",
-									Test:    "Test2/sub3/sub4",
-								},
-							},
-						},
-					}, nil
+					return []*gotest.PackageEvents{{Package: "pkg"}}, nil
+				},
+				converter: func(pkg *gotest.PackageEvents) (PackageRun, error) {
+					return PackageRun{}, errors.New("error converting")
 				},
 			},
-			want: []PackageRun{
-				{
-					Tests: []*Test{
-						{FullName: "Test2", Name: "Test2", Package: "pkg", actions: []gotest.Action{gotest.Pass},
-							Subtests: []*Test{
-								{
-									FullName: "Test2/sub3/sub4", Name: "sub4", Package: "pkg",
-									Subtests: []*Test{}, actions: []gotest.Action{gotest.Pass},
-								},
-							},
-						},
-					},
-				},
-			},
+			want:    TestRun{},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cp := tt.parser
-			got, err := cp.Stats(testFile)
+			got, err := cp.Stats(strings.NewReader(""))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Stats() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			sort.Slice(tt.want, func(i, j int) bool {
-				return tt.want[i].pkgName > tt.want[j].pkgName
+			sort.Slice(tt.want.pkgs, func(i, j int) bool {
+				return tt.want.pkgs[i].pkgName > tt.want.pkgs[j].pkgName
 			})
 			sort.Slice(got.pkgs, func(i, j int) bool {
 				return got.pkgs[i].pkgName > got.pkgs[j].pkgName
 			})
-			for i, p := range tt.want {
-				assert.ElementsMatch(t, p.Tests, got.pkgs[i].Tests)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
+// zeroPlus returns a zero time with the given number of hours added
+func zeroPlus(num int) time.Time {
+	return time.Time{}.Add(time.Duration(num) * time.Hour)
+}
+
 func Test_CoverageParser_Stats(t *testing.T) {
-	fileName := t.TempDir() + "/" + "test.json"
-	if _, err := os.Create(fileName); err != nil {
-		t.Fatal(err)
-	}
-	testFile, err := os.Open(fileName)
-	if err != nil {
-		t.Fatal(err)
-	}
 	tests := []struct {
 		name        string
 		funcProfile io.Reader
@@ -326,7 +262,7 @@ func Test_CoverageParser_Stats(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.parser.Stats(testFile, tt.funcProfile)
+			got, err := tt.parser.Stats(strings.NewReader(""), tt.funcProfile)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
