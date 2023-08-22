@@ -2,111 +2,176 @@ package tstat
 
 import (
 	"testing"
-	"time"
 
 	"github.com/nickfiggins/tstat/internal/gotest"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_parseTestOutputs(t *testing.T) {
+func TestTest_addSubtests(t *testing.T) {
+	type fields struct {
+		Subtests []*Test
+		actions  []gotest.Action
+		FullName string
+		Name     string
+		Package  string
+	}
 	type args struct {
-		outputs []*gotest.PackageEvents
+		sub *Test
 	}
 	tests := []struct {
 		name    string
+		fields  fields
 		args    args
-		want    TestRun
-		wantErr bool
+		wantSub []*Test
 	}{
 		{
-			name: "empty, with seed",
+			name: "simple",
+			fields: fields{
+				Subtests: []*Test{},
+				actions:  []gotest.Action{},
+				FullName: "TestAdd",
+				Name:     "TestAdd",
+				Package:  "pkg",
+			},
 			args: args{
-				outputs: []*gotest.PackageEvents{
-					{
-						Package: "pkg",
-						Start:   nil, End: nil,
-						Events: []gotest.Event{},
-						Seed:   1686798048639894000,
-					},
+				sub: &Test{
+					Subtests: []*Test{},
+					actions:  []gotest.Action{},
+					FullName: "TestAdd/sub",
+					Name:     "sub",
+					Package:  "pkg",
 				},
 			},
-			want: TestRun{
-				pkgs: []PackageRun{
-					{
-						pkgName: "pkg",
-						Seed:    1686798048639894000,
-						Tests:   []*Test{},
-					},
+			wantSub: []*Test{
+				{
+					Subtests: []*Test{},
+					actions:  []gotest.Action{},
+					FullName: "TestAdd/sub",
+					Name:     "sub",
+					Package:  "pkg",
 				},
 			},
-			wantErr: false,
 		},
 		{
-			name: "single test",
+			name: "test with /, not a subtest",
+			fields: fields{
+				Subtests: []*Test{},
+				actions:  []gotest.Action{},
+				FullName: "TestAdd",
+				Name:     "TestAdd",
+				Package:  "pkg",
+			},
 			args: args{
-				outputs: []*gotest.PackageEvents{
-					{
-						Package: "pkg",
-						Start:   nil, End: nil,
-						Events: []gotest.Event{
-							{
-								Time:    time.Time{}.Add(1 * time.Minute),
-								Action:  gotest.Start,
-								Package: "pkg",
-								Test:    "TestAdd",
-							},
-							{
-								Time:    time.Now(),
-								Action:  gotest.Run,
-								Package: "pkg",
-								Test:    "TestAdd",
-							},
-							{
-								Time:    time.Time{}.Add(2 * time.Minute),
-								Action:  gotest.Out,
-								Package: "pkg",
-								Test:    "TestAdd",
-								Elapsed: 1,
-							},
-							{
-								Time:    time.Now(),
-								Action:  gotest.Pass,
-								Package: "pkg",
-								Test:    "TestAdd",
-							},
-						},
-					},
+				sub: &Test{
+					Subtests: []*Test{},
+					actions:  []gotest.Action{},
+					FullName: "TestAdd/sub/sub2",
+					Name:     "sub2",
+					Package:  "pkg",
 				},
 			},
-			want: TestRun{
-				pkgs: []PackageRun{
-					{
-						pkgName: "pkg",
-						Tests: []*Test{
-							{
-								FullName: "TestAdd",
-								Name:     "TestAdd",
-								Package:  "pkg",
-								Subtests: []*Test{},
-								actions:  []gotest.Action{gotest.Start, gotest.Run, gotest.Out, gotest.Pass},
-								start:    time.Time{}.Add(1 * time.Minute),
-								end:      time.Time{}.Add(2 * time.Minute),
-							},
-						},
-					},
+			wantSub: []*Test{
+				{
+					Subtests: []*Test{},
+					actions:  []gotest.Action{},
+					FullName: "TestAdd/sub/sub2",
+					Name:     "sub2",
+					Package:  "pkg",
 				},
 			},
-			wantErr: false,
+		},
+		{
+			name: "adds nested subtest",
+			fields: fields{
+				Subtests: []*Test{
+					{
+						Subtests: []*Test{},
+						actions:  []gotest.Action{},
+						FullName: "TestAdd/sub",
+						Name:     "sub",
+						Package:  "pkg",
+					},
+				},
+				actions:  []gotest.Action{},
+				FullName: "TestAdd",
+				Name:     "TestAdd",
+				Package:  "pkg",
+			},
+			args: args{
+				sub: &Test{
+					Subtests: []*Test{},
+					actions:  []gotest.Action{},
+					FullName: "TestAdd/sub/sub2",
+					Name:     "sub2",
+					Package:  "pkg",
+				},
+			},
+			wantSub: []*Test{
+				{
+					Subtests: []*Test{
+						{
+							Subtests: []*Test{},
+							actions:  []gotest.Action{},
+							FullName: "TestAdd/sub/sub2",
+							Name:     "sub2",
+							Package:  "pkg",
+						},
+					},
+					actions:  []gotest.Action{},
+					FullName: "TestAdd/sub",
+					Name:     "sub",
+					Package:  "pkg",
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseTestOutputs(tt.args.outputs)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseTestOutputs() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			tr := &Test{
+				Subtests: tt.fields.Subtests,
+				actions:  tt.fields.actions,
+				FullName: tt.fields.FullName,
+				Name:     tt.fields.Name,
+				Package:  tt.fields.Package,
 			}
-			assert.Equal(t, tt.want, got)
+			tr.addSubtests(tt.args.sub)
+			assert.Equal(t, tt.wantSub, tr.Subtests)
+		})
+	}
+}
+
+func TestTest_looksLikeSub(t *testing.T) {
+	tests := []struct {
+		name       string
+		parentName string
+		subName    string
+		want       bool
+	}{
+		{
+			name:       "simple",
+			parentName: "TestAdd",
+			subName:    "TestAdd/sub",
+			want:       true,
+		},
+		{
+			name:       "nested",
+			parentName: "TestAdd",
+			subName:    "TestAdd/sub/sub3",
+			want:       true,
+		},
+		{
+			name:       "not sub",
+			parentName: "TestAdd",
+			subName:    "TestAdd2",
+			want:       false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := &Test{FullName: tt.parentName}
+			if got := tr.looksLikeSub(tt.subName); got != tt.want {
+				t.Errorf("Test.looksLikeSub() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

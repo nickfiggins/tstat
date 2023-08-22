@@ -1,13 +1,10 @@
 package tstat
 
 import (
-	"fmt"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/nickfiggins/tstat/internal/gotest"
-	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
@@ -22,18 +19,29 @@ type Test struct {
 	start, end time.Time
 }
 
-func (t Test) withEvent(event gotest.Event) Test {
+func (t *Test) withEvent(event gotest.Event) *Test {
 	t.actions = append(t.actions, event.Action)
 
 	switch event.Action { //nolint:exhaustive // no need to handle all actions
-	case gotest.Start:
-		t.start = event.Time
-	case gotest.Out:
-		if event.Elapsed != 0 {
+	case gotest.Start, gotest.Run:
+		if isBefore(t.start, event.Time) {
+			t.start = event.Time
+		}
+	case gotest.Pass, gotest.Fail, gotest.Out:
+		if isAfter(t.end, event.Time) {
 			t.end = event.Time
 		}
 	}
 	return t
+}
+
+// isBefore returns true if t2 is before t1, or if t1 is zero.
+func isBefore(t1, t2 time.Time) bool {
+	return t1.IsZero() || (!t2.IsZero() && t2.Before(t1))
+}
+
+func isAfter(t1, t2 time.Time) bool {
+	return t1.IsZero() || (!t2.IsZero() && t2.After(t1))
 }
 
 // Test returns the test with the given name. If the test name matches the current test, it will be returned.
@@ -69,147 +77,25 @@ func (t *Test) Duration() time.Duration {
 	return t.end.Sub(t.start)
 }
 
-// does the test name look like a sub test of the current test?
+// does the subName look like a sub test of the current test?
 func (t *Test) looksLikeSub(subName string) bool {
-	return strings.HasPrefix(subName+"/", t.FullName)
+	return strings.HasPrefix(subName, t.FullName+"/")
 }
 
-func (t *Test) addSubtests(sub Test) {
+func (t *Test) addSubtests(sub *Test) {
 	trimmed := strings.TrimPrefix(sub.FullName, t.FullName+"/")
 	remainingSubs := strings.Split(trimmed, "/")
 	if len(remainingSubs) == 1 {
-		t.Subtests = append(t.Subtests, &sub)
+		t.Subtests = append(t.Subtests, sub)
 		return
 	}
 
 	for _, subtest := range t.Subtests {
-		if t.looksLikeSub(subtest.FullName) {
+		if subtest.looksLikeSub(sub.FullName) {
 			subtest.addSubtests(sub)
-		}
-	}
-}
-
-func newTest(pkg, name string) Test {
-	// add 1 to pull the part after the slash, and conveniently
-	// handle the case of no subtests as well
-	subStart := strings.LastIndex(name, "/") + 1
-	return Test{
-		Subtests: make([]*Test, 0),
-		actions:  []gotest.Action{},
-		FullName: name,
-		Package:  pkg,
-		Name:     name[subStart:],
-	}
-}
-
-func parseTestOutputs(pkgs []*gotest.PackageEvents) (TestRun, error) {
-	suite := TestRun{}
-	for _, pkg := range pkgs {
-		run, err := parsePackageEvents(pkg)
-		if err != nil {
-			return TestRun{}, err
-		}
-		if suite.start.IsZero() || run.start.Before(suite.start) {
-			suite.start = run.start
-		}
-
-		if suite.end.IsZero() || run.end.After(suite.end) {
-			suite.end = run.end
-		}
-
-		suite.pkgs = append(suite.pkgs, run)
-	}
-	return suite, nil
-}
-
-func parsePackageEvents(events *gotest.PackageEvents) (PackageRun, error) {
-	packageTests, err := getPackageTests(events.Events)
-	if err != nil {
-		return PackageRun{}, err
-	}
-
-	var start, end time.Time
-	var failed bool
-	if events.Start != nil {
-		start = events.Start.Time
-	}
-
-	if events.End != nil {
-		end = events.End.Time
-		failed = events.End.Action == gotest.Fail
-	}
-
-	return PackageRun{
-		pkgName: events.Package,
-		start:   start, end: end,
-		Tests:  packageTests,
-		Seed:   events.Seed,
-		failed: failed,
-	}, nil
-}
-
-func getPackageTests(events []gotest.Event) ([]*Test, error) {
-	packageTests := make(map[string]Test, 0)
-	for _, event := range events {
-		if event.Test == "" {
-			continue
-		}
-
-		test, ok := packageTests[event.Test]
-		if !ok {
-			test = newTest(event.Package, event.Test)
-		}
-
-		packageTests[event.Test] = test.withEvent(event)
-	}
-
-	testsByName := maps.Values(packageTests)
-	sort.Sort(byTestName(testsByName))
-
-	rootTests, err := nestSubtests(testsByName)
-	if err != nil {
-		return nil, err
-	}
-	return rootTests, nil
-}
-
-func clean(s []string) []string {
-	out := make([]string, 0)
-	for _, v := range s {
-		if v != "" {
-			out = append(out, v)
-		}
-	}
-	return out
-}
-
-func nestSubtests(tests []Test) ([]*Test, error) {
-	rootTests := map[string]*Test{}
-	for _, to := range tests {
-		subs := clean(strings.Split(to.FullName, "/"))
-		switch len(subs) {
-		case 0:
-		case 1:
-			out := to
-			rootTests[to.FullName] = &out
-		default:
-			test, ok := rootTests[subs[0]]
-			if !ok && len(subs) > 1 {
-				return nil, fmt.Errorf("subtest found without corresponding parent: %v", to.FullName)
-			}
-			test.addSubtests(to)
+			return
 		}
 	}
 
-	return maps.Values(rootTests), nil
-}
-
-// byTestName sorts tests by their name, which ensures that all parent tests come
-// before the subtests.
-type byTestName []Test
-
-func (b byTestName) Len() int      { return len(b) }
-func (b byTestName) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
-func (b byTestName) Less(i, j int) bool {
-	return b[i].FullName < b[j].FullName
+	t.Subtests = append(t.Subtests, sub)
 }
