@@ -42,20 +42,17 @@ func convertEvents(pkg *gotest.PackageEvents) (PackageRun, error) {
 
 func getPackageTests(events []gotest.Event) []*Test {
 	packageTests := make(map[string]*Test, 0)
-	for _, out := range events {
-		if out.Test == "" {
+	for _, event := range events {
+		if event.Test == "" {
 			continue
 		}
 
-		test, ok := packageTests[out.Test]
+		test, ok := packageTests[event.Test]
 		if !ok {
-			t := toTest(out)
-			packageTests[out.Test] = &t
-			continue
+			test = newTest(event.Package, event.Test)
 		}
 
-		test.actions = append(test.actions, out.Action)
-		packageTests[out.Test] = test
+		packageTests[event.Test] = test.withEvent(event)
 	}
 
 	testsByName := maps.Values(packageTests)
@@ -63,16 +60,16 @@ func getPackageTests(events []gotest.Event) []*Test {
 	return testsByName
 }
 
-func toTest(to gotest.Event) Test {
+func newTest(pkg, name string) *Test {
 	// add 1 to pull the part after the slash, and conveniently
 	// handle the case of no subtests as well
-	subStart := strings.LastIndex(to.Test, testDelim) + 1
-	return Test{
+	subStart := strings.LastIndex(name, "/") + 1
+	return &Test{
 		Subtests: make([]*Test, 0),
-		actions:  []gotest.Action{to.Action},
-		FullName: to.Test,
-		Package:  to.Package,
-		Name:     to.Test[subStart:],
+		actions:  []gotest.Action{},
+		FullName: name,
+		Package:  pkg,
+		Name:     name[subStart:],
 	}
 }
 

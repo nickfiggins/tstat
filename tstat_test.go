@@ -77,11 +77,18 @@ func Test_CoverFromReaders(t *testing.T) {
 	}
 }
 
+type wantTest struct {
+	name  string
+	dur   time.Duration
+	count int
+}
+
 func Test_Tests(t *testing.T) {
 	type wantPackage struct {
-		name  string
-		seed  int64
-		tests int
+		name      string
+		seed      int64
+		testCount int
+		wantTests []wantTest
 	}
 
 	type want struct {
@@ -112,8 +119,17 @@ func Test_Tests(t *testing.T) {
 			if gotPkg.Seed != pkg.seed {
 				t.Errorf("got pkg %v seed %v, want %v", pkg.name, gotPkg.Seed, pkg.seed)
 			}
-			if gotPkg.Count() != pkg.tests {
-				t.Errorf("got pkg %v, %v tests, want %v", pkg.name, gotPkg.Count(), pkg.tests)
+			if gotPkg.Count() != pkg.testCount {
+				t.Errorf("got pkg %v, %v tests, want %v", pkg.name, gotPkg.Count(), pkg.testCount)
+			}
+
+			for _, wantTest := range pkg.wantTests {
+				test, ok := gotPkg.Test(wantTest.name)
+				if !ok {
+					t.Errorf("test %v not found", wantTest.name)
+					continue
+				}
+				compareTest(t, wantTest, test)
 			}
 		}
 	}
@@ -127,9 +143,13 @@ func Test_Tests(t *testing.T) {
 			testFile: "testdata/bigtest.json",
 			want: want{50, false, 473 * time.Millisecond, []wantPackage{
 				{
-					name:  "github.com/nickfiggins/tstat",
-					seed:  0,
-					tests: 18,
+					name:      "github.com/nickfiggins/tstat",
+					seed:      0,
+					testCount: 18,
+					wantTests: []wantTest{
+						{name: "Test_Internal_TestRunFromReader", dur: 353 * time.Microsecond, count: 4},
+						{name: "Test_CoverageStats", dur: 50605 * time.Microsecond, count: 3},
+					},
 				},
 			}},
 			wantErr: false,
@@ -138,19 +158,19 @@ func Test_Tests(t *testing.T) {
 			testFile: "testdata/go-cmp/go-cmp.json",
 			want: want{709, false, 1082 * time.Millisecond, []wantPackage{
 				{
-					name:  "github.com/google/go-cmp/cmp",
-					seed:  1688261989310323000,
-					tests: 301,
+					name:      "github.com/google/go-cmp/cmp",
+					seed:      1688261989310323000,
+					testCount: 301,
 				},
 				{
-					name:  "github.com/google/go-cmp/cmp/cmpopts",
-					seed:  1688261989453195000,
-					tests: 151,
+					name:      "github.com/google/go-cmp/cmp/cmpopts",
+					seed:      1688261989453195000,
+					testCount: 151,
 				},
 				{
-					name:  "github.com/google/go-cmp/cmp/internal/diff",
-					seed:  1688261989662787000,
-					tests: 238,
+					name:      "github.com/google/go-cmp/cmp/internal/diff",
+					seed:      1688261989662787000,
+					testCount: 238,
 				},
 			}},
 			wantErr: false,
@@ -173,5 +193,16 @@ func Test_Tests(t *testing.T) {
 			}
 			compare(t, tt.want, stats)
 		})
+	}
+}
+
+func compareTest(t *testing.T, want wantTest, got *tstat.Test) {
+	t.Helper()
+
+	if got.Count() != want.count {
+		t.Errorf("got count %v, want %v", got.Count(), want.count)
+	}
+	if got.Duration() != want.dur {
+		t.Errorf("got duration %v, want %v", got.Duration(), want.dur)
 	}
 }

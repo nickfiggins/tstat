@@ -23,6 +23,14 @@ type Function struct {
 	Percent  float64
 }
 
+func ReadByPackage(r io.Reader) ([]*PackageFunctions, error) {
+	output, err := readProfile(r)
+	if err != nil {
+		return nil, err
+	}
+	return ByPackage(output), nil
+}
+
 const numFields = 3
 
 func readProfile(r io.Reader) (Output, error) {
@@ -79,12 +87,21 @@ func readProfile(r io.Reader) (Output, error) {
 	return Output{Functions: funcs, Percent: totalPercent}, nil
 }
 
-func ReadByPackage(r io.Reader) ([]*PackageFunctions, error) {
-	output, err := readProfile(r)
-	if err != nil {
-		return nil, err
+func ByPackage(output Output) []*PackageFunctions {
+	packages := make(map[string]*PackageFunctions)
+	for _, function := range output.Functions {
+		if function.Package == "" {
+			continue
+		}
+		pkg, ok := packages[function.Package]
+		if !ok {
+			packages[function.Package] = newPkgFunctions(function)
+			continue
+		}
+		pkg.add(function)
 	}
-	return ByPackage(output), nil
+
+	return maps.Values(packages)
 }
 
 type PackageFunctions struct {
@@ -109,23 +126,6 @@ func (pf *PackageFunctions) add(fn Function) {
 type FileFunctions struct {
 	File      string
 	Functions []Function
-}
-
-func ByPackage(output Output) []*PackageFunctions {
-	packages := make(map[string]*PackageFunctions)
-	for _, function := range output.Functions {
-		if function.Package == "" {
-			continue
-		}
-		pkg, ok := packages[function.Package]
-		if !ok {
-			packages[function.Package] = newPkgFunctions(function)
-			continue
-		}
-		pkg.add(function)
-	}
-
-	return maps.Values(packages)
 }
 
 func newPkgFunctions(fn Function) *PackageFunctions {

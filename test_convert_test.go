@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_eventConverter_convert(t *testing.T) {
+func Test_convert(t *testing.T) {
 	tests := []struct {
 		name    string
 		have    *gotest.PackageEvents
@@ -20,14 +20,14 @@ func Test_eventConverter_convert(t *testing.T) {
 			have: &gotest.PackageEvents{
 				Package: "pkg",
 				Events: []gotest.Event{
-					{Time: time.Now(), Action: gotest.Run, Package: "pkg", Test: "Test"},
-					{Time: time.Now(), Action: gotest.Fail, Package: "pkg", Test: "Test"},
+					{Time: zeroPlus(1), Action: gotest.Run, Package: "pkg", Test: "Test"},
+					{Time: zeroPlus(2), Action: gotest.Fail, Package: "pkg", Test: "Test", Elapsed: 123},
 				},
 			},
 			want: PackageRun{
 				pkgName: "pkg",
 				Tests: []*Test{
-					{Name: "Test", Package: "pkg", FullName: "Test", actions: []gotest.Action{gotest.Run, gotest.Fail}, Subtests: []*Test{}},
+					{Name: "Test", Package: "pkg", FullName: "Test", actions: []gotest.Action{gotest.Run, gotest.Fail}, Subtests: []*Test{}, start: zeroPlus(1), end: zeroPlus(2)},
 				},
 			},
 		},
@@ -49,8 +49,8 @@ func Test_eventConverter_convert(t *testing.T) {
 			have: &gotest.PackageEvents{
 				Package: "pkg",
 				Events: []gotest.Event{
-					{Time: time.Now(), Action: gotest.Pass, Package: "pkg", Test: "Test2"},
-					{Time: time.Now(), Action: gotest.Pass, Package: "pkg", Test: "Test2/sub3/sub4"},
+					{Time: zeroPlus(1), Action: gotest.Pass, Package: "pkg", Test: "Test2"},
+					{Time: zeroPlus(1), Action: gotest.Pass, Package: "pkg", Test: "Test2/sub3/sub4"},
 				},
 			},
 			want: PackageRun{
@@ -68,8 +68,12 @@ func Test_eventConverter_convert(t *testing.T) {
 								Subtests: []*Test{},
 								FullName: "Test2/sub3/sub4",
 								actions:  []gotest.Action{gotest.Pass},
+								start:    zeroPlus(0),
+								end:      zeroPlus(1),
 							},
 						},
+						start: zeroPlus(0),
+						end:   zeroPlus(1),
 					},
 				},
 			},
@@ -79,11 +83,11 @@ func Test_eventConverter_convert(t *testing.T) {
 			have: &gotest.PackageEvents{
 				Package: "pkg",
 				Events: []gotest.Event{
-					{Time: time.Now(), Action: gotest.Pass, Package: "pkg", Test: "Test2"},
-					{Time: time.Now(), Action: gotest.Run, Package: "pkg", Test: "Test2/sub"},
-					{Time: time.Now(), Action: gotest.Out, Package: "pkg", Test: "Test2/sub"},
-					{Time: time.Now(), Action: gotest.Pass, Package: "pkg", Test: "Test2/sub"},
-					{Time: time.Now(), Action: gotest.Pass, Package: "pkg", Test: "Test2/sub/sub2"},
+					{Time: zeroPlus(0), Action: gotest.Pass, Package: "pkg", Test: "Test2"},
+					{Time: zeroPlus(0), Action: gotest.Run, Package: "pkg", Test: "Test2/sub"},
+					{Time: zeroPlus(0), Action: gotest.Out, Package: "pkg", Test: "Test2/sub"},
+					{Time: zeroPlus(0), Action: gotest.Pass, Package: "pkg", Test: "Test2/sub"},
+					{Time: zeroPlus(0), Action: gotest.Pass, Package: "pkg", Test: "Test2/sub/sub2"},
 				},
 			},
 			want: PackageRun{
@@ -110,7 +114,7 @@ func Test_eventConverter_convert(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := convertEvents(tt.have)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("eventConverter.convert() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("convert() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			assert.Equal(t, tt.want, got)
