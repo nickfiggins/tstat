@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.20'  # Replace with your desired Go version (e.g., 1.16)
+          go-version: '1.21'  # Replace with your desired Go version (e.g., 1.16)
 
       - name: Run Go Tests
         run: go test ./...

@@ -74,21 +74,23 @@ func (pc *PackageCoverage) Functions() []FunctionCoverage {
 }
 
 func newPackageCoverage(stmts *gocover.PackageStatements) *PackageCoverage {
-	files := make(map[string]*FileCoverage)
+	files := make([]*FileCoverage, len(stmts.Files))
+	i := 0
 	for name, statements := range stmts.Files {
-		files[name] = &FileCoverage{
+		files[i] = &FileCoverage{
 			Name:         name,
 			Functions:    make([]FunctionCoverage, 0),
 			Percent:      statements.Percent,
 			Stmts:        int(statements.Stmts),
 			CoveredStmts: int(statements.CoveredStmts),
 		}
+		i++
 	}
 
 	return &PackageCoverage{
 		Name:    stmts.Package,
 		Percent: mathutil.Percent(stmts.CoveredStmts, stmts.Stmts),
-		Files:   maps.Values(files),
+		Files:   files,
 	}
 }
 

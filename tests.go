@@ -4,8 +4,9 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	"github.com/nickfiggins/tstat/internal/gotest"
-	"golang.org/x/exp/slices"
 )
 
 // Test is a single test, which may have subtests.
