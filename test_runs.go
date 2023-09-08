@@ -16,8 +16,9 @@ func (tr *TestRun) Packages() []PackageRun {
 	return tr.pkgs
 }
 
-// PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,
-// the Seed field will be populated. Otherwise, it will be 0.
+// Package returns a PackageRun for the package with the given name, if any data was
+// recorded for it during the test run. If the package isn't found, false is returned
+// as the second argument.
 func (tr *TestRun) Package(name string) (PackageRun, bool) {
 	for _, pkg := range tr.pkgs {
 		if strings.EqualFold(name, pkg.pkgName) {
@@ -27,6 +28,7 @@ func (tr *TestRun) Package(name string) (PackageRun, bool) {
 	return PackageRun{}, false
 }
 
+// Duration returns the duration of the TestRun.
 func (tr *TestRun) Duration() time.Duration {
 	return tr.end.Sub(tr.start)
 }
@@ -59,13 +61,13 @@ func (pr *PackageRun) Test(name string) (*Test, bool) {
 }
 
 func findTest(name string, tests ...*Test) (*Test, bool) {
-	for _, t := range tests {
-		if strings.EqualFold(t.Name, name) {
-			return t, true
+	for _, test := range tests {
+		if strings.EqualFold(test.Name, name) {
+			return test, true
 		}
 
-		if t.looksLikeSub(name) {
-			if sub, ok := findTest(name, t.Subtests...); ok {
+		if test.looksLikeSub(name) {
+			if sub, ok := findTest(name, test.Subtests...); ok {
 				return sub, true
 			}
 		}
@@ -73,7 +75,8 @@ func findTest(name string, tests ...*Test) (*Test, bool) {
 	return nil, false
 }
 
-// PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,.
+// PackageRun represents the results of a package test run. If the package was run with the -shuffle flag,
+// the Seed field will be populated. Otherwise, it will be 0.
 type PackageRun struct {
 	pkgName    string
 	start, end time.Time
